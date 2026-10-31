@@ -1,0 +1,21 @@
+# Local credentials & session state (never commit)
+.env
+.env.local
+.scratch/
+*.session.json
+
+# Go build & test artifacts
+bin/
+dist/
+coverage.out
+*.test
+*.prof
+vocab-desktop
+
+# Frontend dependencies
+frontend/node_modules/
+
+# OS / IDE files
+.DS_Store
+.idea/
+.vscode/
