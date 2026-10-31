@@ -35,19 +35,77 @@ The repository is structured into three cleanly separated layers:
 ## 2. Development & Build Instructions
 
 ### Prerequisites
-- **Go 1.26+**
+- **Go 1.27.3 or newer**, matching `go.mod`.
 - **Bun** (`bun`)
-- **Wails v3 CLI** (`go install github.com/wailsapp/wails/v3/cmd/wails3@latest`)
+- **Wails v3 CLI**, matching the repository's dependency: `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`.
 - Platform WebView dependencies (macOS WKWebView, Windows WebView2, or Linux GTK3/WebKit2GTK). Note: while the `vocabulary_go` SDK is 100% pure Go (`CGO_ENABLED=0`), building the native Wails desktop binary (`cmd/vocab-desktop`) uses CGo to link native OS window/WebView APIs.
 
-### Install Frontend Dependencies & Generate Wails Bindings
-```bash
-# Generate TypeScript bindings from Go services
-wails3 generate bindings -ts -i -names -d frontend/src/bindings ./cmd/vocab-desktop
+### Build and Install on macOS
 
-# Install frontend packages and build production assets with Bun
+Clone this repository and run the commands below from its root. Install Go and
+Bun first. Install Apple's Command Line Tools if needed:
+
+```bash
+xcode-select --install
+```
+
+The packaging helper also uses `python3`, `qlmanage`, `codesign`, and `plutil`.
+Ensure `python3` is available; the other tools are supplied by macOS. Then install
+the matching Wails CLI and build:
+
+```bash
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0
+export PATH="$(go env GOPATH)/bin:$PATH"
+./scripts/package-macos.sh
+```
+
+The helper installs the locked frontend dependencies, builds the frontend and
+production Go executable, adds the app icon, and signs and verifies a local
+`dist/Vocabulary Studio.app` bundle. It builds for the Mac running the command:
+Apple Silicon on Apple Silicon, or Intel on Intel.
+
+Install through Finder:
+
+```bash
+open dist
+```
+
+Drag **Vocabulary Studio.app** into **Applications**, then open it. Alternatively,
+install for your user account from the terminal:
+
+```bash
+mkdir -p "$HOME/Applications"
+ditto "dist/Vocabulary Studio.app" "$HOME/Applications/Vocabulary Studio.app"
+open "$HOME/Applications/Vocabulary Studio.app"
+```
+
+Frontend assets and Monaspace fonts are included in the app. You do not need to
+run a development server, install fonts, or create a `.env` file to use the
+desktop app; sign in through its interface. Run the helper again after pulling
+changes, then replace the installed app with the new bundle.
+
+The helper uses ad-hoc signing for local builds. Developer ID signing and
+notarization for distribution are separate release steps. Native builds have been
+validated on Apple Silicon; Intel and older macOS compatibility remain unverified.
+
+### Development Build and Optional Binding Regeneration
+
+Build the frontend first: Go embeds `frontend/dist`, which is generated and is not
+included in a fresh checkout.
+
+```bash
 cd frontend
-bun install
+bun install --frozen-lockfile
+bun run build
+cd ..
+```
+
+TypeScript bindings are checked in. Regenerate them when Go service interfaces
+change, then rebuild the frontend:
+
+```bash
+wails3 generate bindings -ts -i -names -d frontend/src/bindings ./cmd/vocab-desktop
+cd frontend
 bun run build
 cd ..
 ```
