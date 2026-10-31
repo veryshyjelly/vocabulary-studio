@@ -5,7 +5,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/veryshyjelly/vocabulary_go/sdk/internal/htmlparse"
+	"github.com/veryshyjelly/vocabulary-studio/sdk/internal/htmlparse"
 	"golang.org/x/text/runes"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"

@@ -23,77 +23,77 @@ import * as $models from "./models.js";
  * EndSession clears the local TrainerSession state.
  */
 export function EndSession(): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.EndSession");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.EndSession");
 }
 
 /**
  * GetQuizResults fetches the per-question breakdown for a completed quiz.
  */
 export function GetQuizResults(activityID: string): $CancellablePromise<vocab$0.QuizQuestionResult[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.GetQuizResults", activityID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.GetQuizResults", activityID);
 }
 
 /**
  * GetSessionState returns the current TrainerSessionStateDTO without making a network call.
  */
 export function GetSessionState(): $CancellablePromise<$models.TrainerSessionStateDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.GetSessionState");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.GetSessionState");
 }
 
 /**
  * GuessBee submits a spelling guess in the active Spelling Bee session.
  */
 export function GuessBee(guess: string): $CancellablePromise<$models.BeeSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.GuessBee", guess);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.GuessBee", guess);
 }
 
 /**
  * NextBeeWord advances to the next word in the Spelling Bee after completing or surrendering the current word.
  */
 export function NextBeeWord(): $CancellablePromise<$models.BeeSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.NextBeeWord");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.NextBeeWord");
 }
 
 /**
  * NextQuestion advances the active TrainerSession to the next question slide.
  */
 export function NextQuestion(): $CancellablePromise<$models.TrainerSessionStateDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.NextQuestion");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.NextQuestion");
 }
 
 /**
  * ResetBee resets Spelling Bee progress for `listID`.
  */
 export function ResetBee(listID: number): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.ResetBee", listID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.ResetBee", listID);
 }
 
 /**
  * ResetChallenge resets an out-of-sync challenge state on the server.
  */
 export function ResetChallenge(): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.ResetChallenge");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.ResetChallenge");
 }
 
 /**
  * StartBee starts or resumes a Spelling Bee session for `listID`.
  */
 export function StartBee(listID: number, activityID: string): $CancellablePromise<$models.BeeSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.StartBee", listID, activityID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.StartBee", listID, activityID);
 }
 
 /**
  * StartQuiz begins or resumes a Quiz (`POST /quiz/start.json`).
  */
 export function StartQuiz(quizID: string, assignmentID: string, activityID: string): $CancellablePromise<$models.QuizSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.StartQuiz", quizID, assignmentID, activityID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.StartQuiz", quizID, assignmentID, activityID);
 }
 
 /**
  * StartSession initializes or resumes a VocabTrainer (listID == 0) or List Practice (listID > 0) session.
  */
 export function StartSession(listID: number, activityID: string): $CancellablePromise<$models.TrainerSessionStateDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.StartSession", listID, activityID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.StartSession", listID, activityID);
 }
 
 /**
@@ -101,33 +101,33 @@ export function StartSession(listID: number, activityID: string): $CancellablePr
  * All grading and pacing rules are enforced by the underlying Go SDK.
  */
 export function SubmitChoice(choiceIndex: number): $CancellablePromise<$models.TrainerSessionStateDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.SubmitChoice", choiceIndex);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.SubmitChoice", choiceIndex);
 }
 
 /**
  * SubmitQuizAnswer submits an answer in the active Quiz session (enforcing the >= 1550ms submit delay).
  */
 export function SubmitQuizAnswer(answerNonceOrSpelling: string): $CancellablePromise<$models.QuizSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.SubmitQuizAnswer", answerNonceOrSpelling);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.SubmitQuizAnswer", answerNonceOrSpelling);
 }
 
 /**
  * SubmitSpelling submits a spelling guess (`type == "T"`) to the active TrainerSession.
  */
 export function SubmitSpelling(rawGuess: string): $CancellablePromise<$models.TrainerSessionStateDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.SubmitSpelling", rawGuess);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.SubmitSpelling", rawGuess);
 }
 
 /**
  * SurrenderBee gives up on the current Spelling Bee word (available after 3 incorrect guesses).
  */
 export function SurrenderBee(): $CancellablePromise<$models.BeeSessionDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.SurrenderBee");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.SurrenderBee");
 }
 
 /**
  * UseHint invokes a lifeline ("F" 50/50, "D" Definition, or "E" Word in the Wild) on the active question.
  */
 export function UseHint(hintType: string): $CancellablePromise<$models.HintResultDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.UseHint", hintType);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.TrainerService.UseHint", hintType);
 }

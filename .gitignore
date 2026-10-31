@@ -10,7 +10,7 @@ dist/
 coverage.out
 *.test
 *.prof
-vocab-desktop
+/vocab-desktop
 
 # Frontend dependencies
 frontend/node_modules/

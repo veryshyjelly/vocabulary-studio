@@ -1,7 +1,7 @@
 package desktop
 
 import (
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 // HomeDashboardDTO aggregates real data for the Home screen.

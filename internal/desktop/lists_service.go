@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 // ListsService exposes vocabulary list browsing, search, flashcards, creation, editing,

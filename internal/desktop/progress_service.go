@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 // ProgressService exposes the Home dashboard aggregator, learning/trouble/mastered word lists,

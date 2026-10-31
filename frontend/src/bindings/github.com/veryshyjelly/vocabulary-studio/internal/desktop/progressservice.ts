@@ -23,28 +23,28 @@ import * as $models from "./models.js";
  * GetAchievements fetches the user's earned achievements and milestones.
  */
 export function GetAchievements(): $CancellablePromise<vocab$0.AchievementSummary[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetAchievements");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetAchievements");
 }
 
 /**
  * GetActivities fetches the user's activities (`complete` = `"true"`, `"false"`, or `""` for all).
  */
 export function GetActivities(completeFilter: string, limit: number, nextPageURI: string): $CancellablePromise<vocab$0.ActivitiesResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetActivities", completeFilter, limit, nextPageURI);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetActivities", completeFilter, limit, nextPageURI);
 }
 
 /**
  * GetEffort fetches learner effort stats between `startDate` and `endDate` (`YYYY-MM-DD`).
  */
 export function GetEffort(startDate: string, endDate: string): $CancellablePromise<vocab$0.EffortStats | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetEffort", startDate, endDate);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetEffort", startDate, endDate);
 }
 
 /**
  * GetHomeDashboard aggregates real data for the Home screen, gracefully degrading for unauthenticated users.
  */
 export function GetHomeDashboard(): $CancellablePromise<$models.HomeDashboardDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetHomeDashboard");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetHomeDashboard");
 }
 
 /**
@@ -52,21 +52,21 @@ export function GetHomeDashboard(): $CancellablePromise<$models.HomeDashboardDTO
  * `period` = `""` (all-time), `"daily"`, `"weekly"`, `"monthly"`, or `"season"`, `yyyymmdd` = `"20261031"`).
  */
 export function GetLeaderboard(metric: string, period: string, yyyymmdd: string, top: number): $CancellablePromise<vocab$0.LeaderboardResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetLeaderboard", metric, period, yyyymmdd, top);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetLeaderboard", metric, period, yyyymmdd, top);
 }
 
 /**
  * GetListProgress fetches the user's mastery status on a vocabulary list.
  */
 export function GetListProgress(listID: number): $CancellablePromise<vocab$0.ListProgressStatus | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetListProgress", listID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetListProgress", listID);
 }
 
 /**
  * GetWordProgress fetches sense and mastery progress for a single word.
  */
 export function GetWordProgress(word: string): $CancellablePromise<vocab$0.WordProgressDetail | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.GetWordProgress", word);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.GetWordProgress", word);
 }
 
 /**
@@ -74,26 +74,26 @@ export function GetWordProgress(word: string): $CancellablePromise<vocab$0.WordP
  * (`filter` = `"learning"`, `"trouble"`, or `"mastered"`).
  */
 export function ListLearningWords(filter: string, skip: number, sortBy: string, sortDir: string): $CancellablePromise<vocab$0.AccountProgressWord[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.ListLearningWords", filter, skip, sortBy, sortDir);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.ListLearningWords", filter, skip, sortBy, sortDir);
 }
 
 /**
  * SetWordPriority updates a word's learning priority (-1 Low, 0 Normal, 1 High).
  */
 export function SetWordPriority(word: string, priority: number): $CancellablePromise<vocab$0.WordProgressDetail | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.SetWordPriority", word, priority);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.SetWordPriority", word, priority);
 }
 
 /**
  * StartLearningWord adds `word` to the user's active learning program.
  */
 export function StartLearningWord(word: string): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.StartLearningWord", word);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.StartLearningWord", word);
 }
 
 /**
  * StopLearningWord removes `word` from the user's active learning program.
  */
 export function StopLearningWord(word: string): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.ProgressService.StopLearningWord", word);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.ProgressService.StopLearningWord", word);
 }

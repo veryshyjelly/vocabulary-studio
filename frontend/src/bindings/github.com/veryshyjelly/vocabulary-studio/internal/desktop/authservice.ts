@@ -19,7 +19,7 @@ import * as $models from "./models.js";
  * GetStatus checks the current session via POST /auth/me.json and returns non-sensitive account info.
  */
 export function GetStatus(): $CancellablePromise<$models.AccountStatusDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.AuthService.GetStatus");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.GetStatus");
 }
 
 /**
@@ -27,14 +27,14 @@ export function GetStatus(): $CancellablePromise<$models.AccountStatusDTO | null
  * optionally setting the preferred SessionStoreMode ("keyring", "file", or "memory") first.
  */
 export function Login(username: string, password: string, storeMode: string): $CancellablePromise<$models.AccountStatusDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.AuthService.Login", username, password, storeMode);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.Login", username, password, storeMode);
 }
 
 /**
  * Logout terminates the session on Vocabulary.com and clears local cookies, tokens, and persistent storage.
  */
 export function Logout(): $CancellablePromise<$models.AccountStatusDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.AuthService.Logout");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.Logout");
 }
 
 /**
@@ -42,5 +42,5 @@ export function Logout(): $CancellablePromise<$models.AccountStatusDTO | null> {
  * and verifies it against POST /auth/me.json.
  */
 export function RestoreSession(): $CancellablePromise<$models.AccountStatusDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.AuthService.RestoreSession");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.RestoreSession");
 }

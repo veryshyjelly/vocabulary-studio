@@ -35,7 +35,6 @@ frontend/
   public/                    Bundled fonts, licenses, and application logo
 build/macos/                 macOS bundle metadata template
 scripts/package-macos.sh     Reproducible local macOS packaging
-sdk_compat.go                Deprecated original Go import facade
 bin/, dist/, frontend/dist/  Generated executables, bundles, and web assets
 ```
 
@@ -50,8 +49,9 @@ bin/, dist/, frontend/dist/  Generated executables, bundles, and web assets
   SDK model paths are confined to that adapter.
 - UI primitives import their sibling utilities directly; feature-specific
   authentication stays under `features/auth/`.
-- The root Go facade contains compatibility declarations, never SDK logic. New
-  consumers should use the module documented in [sdk/README.md](../sdk/README.md).
+- SDK consumers import `github.com/veryshyjelly/vocabulary-studio/sdk`, as
+  documented in [sdk/README.md](../sdk/README.md). The root module contains the
+  applications and development tools.
 
 ## Common workflows
 

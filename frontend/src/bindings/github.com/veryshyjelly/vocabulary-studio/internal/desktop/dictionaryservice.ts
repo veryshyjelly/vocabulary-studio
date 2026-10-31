@@ -23,14 +23,14 @@ import * as $models from "./models.js";
  * Autocomplete returns word suggestions for `query`, canceling any obsolete in-flight autocomplete request.
  */
 export function Autocomplete(query: string, maxResults: number): $CancellablePromise<vocab$0.AutocompleteSuggestion[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.Autocomplete", query, maxResults);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.Autocomplete", query, maxResults);
 }
 
 /**
  * ClearSearchHistory clears the saved dictionary lookup history.
  */
 export function ClearSearchHistory(): $CancellablePromise<void> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.ClearSearchHistory");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.ClearSearchHistory");
 }
 
 /**
@@ -38,21 +38,21 @@ export function ClearSearchHistory(): $CancellablePromise<void> {
  * ("" All, "F" Fiction, "A" Arts, "N" News, "B" Business, "S" Sports, "M" Science/Med, "T" Tech).
  */
 export function GetExamples(word: string, domain: string, offset: number, limit: number): $CancellablePromise<$models.CorpusSentenceDTO[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.GetExamples", word, domain, offset, limit);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.GetExamples", word, domain, offset, limit);
 }
 
 /**
  * GetRandomWord fetches a random word from Vocabulary.com's dictionary.
  */
 export function GetRandomWord(): $CancellablePromise<$models.WordDetailDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.GetRandomWord");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.GetRandomWord");
 }
 
 /**
  * GetSearchHistory returns the user's recent dictionary lookups.
  */
 export function GetSearchHistory(): $CancellablePromise<string[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.GetSearchHistory");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.GetSearchHistory");
 }
 
 /**
@@ -60,12 +60,12 @@ export function GetSearchHistory(): $CancellablePromise<string[] | null> {
  * Previous in-flight Lookup calls are automatically canceled.
  */
 export function Lookup(word: string): $CancellablePromise<$models.WordDetailDTO | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.Lookup", word);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.Lookup", word);
 }
 
 /**
  * ResolveAudioURL resolves the MP3 pronunciation stream URL for `word`.
  */
 export function ResolveAudioURL(word: string): $CancellablePromise<string> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DictionaryService.ResolveAudioURL", word);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DictionaryService.ResolveAudioURL", word);
 }

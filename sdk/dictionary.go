@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/veryshyjelly/vocabulary_go/sdk/internal/htmlparse"
+	"github.com/veryshyjelly/vocabulary-studio/sdk/internal/htmlparse"
 )
 
 // Corpus domain filter codes used by `https://corpus.vocabulary.com/api/1.0/examples`.

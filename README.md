@@ -1,16 +1,18 @@
-# vocabulary_go & Vocabulary Studio Desktop
+# Vocabulary Studio
 
-A complete Vocabulary.com Go SDK (`vocabulary_go`) and cross-platform native desktop application (**Vocabulary Studio**) built with **Wails v3**, **Go**, **React 19**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Lucide**.
+A complete Vocabulary.com Go SDK and cross-platform native desktop application (**Vocabulary Studio**) built with **Wails v3**, **Go**, **React 19**, **TypeScript**, **Vite**, **Tailwind CSS**, and **Lucide**.
+
+![Vocabulary Studio practice screen in dark mode with correct-answer feedback](preview.png)
 
 ---
 
 ## 1. Architecture Overview
 
-The repository has two Go modules: a reusable SDK in `sdk/` and the root application module, which consumes it through a local `replace` directive. The deprecated root SDK import remains available through `sdk_compat.go`. See [the project structure](docs/ARCHITECTURE.md) for the directory map and dependency boundaries.
+The repository has two Go modules: a reusable SDK in `sdk/` and the root application module, which consumes it through a local `replace` directive. See [the project structure](docs/ARCHITECTURE.md) for the directory map and dependency boundaries.
 
 The product is structured into three layers:
 
-1. **Standalone Go SDK ([`sdk/`](sdk/README.md), module `github.com/veryshyjelly/vocabulary_go/sdk`)**:
+1. **Standalone Go SDK ([`sdk/`](sdk/README.md), module `github.com/veryshyjelly/vocabulary-studio/sdk`)**:
    - Its own `go.mod`, domain tests, `testdata/`, and private `internal/htmlparse/` parsers. No Wails or frontend dependency.
    - **100% Pure Go (`CGO_ENABLED=0`)**: Zero CGo dependencies in the SDK layer.
    - **Dual-Stage Authentication**: Manages web session cookies (`SESSION`, `guid`, `tz`, `__cf_bm`) and `singleflight`-deduplicated Bearer JWTs (`POST https://api.vocabulary.com/1.0/auth/token`).
@@ -42,12 +44,18 @@ The product is structured into three layers:
 - **Go 1.27.3 or newer**, matching `go.mod`.
 - **Bun** (`bun`)
 - **Wails v3 CLI**, matching the repository's dependency: `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`.
-- Platform WebView dependencies (macOS WKWebView, Windows WebView2, or Linux GTK3/WebKit2GTK). Note: while the `vocabulary_go` SDK is 100% pure Go (`CGO_ENABLED=0`), building the native Wails desktop binary (`cmd/vocab-desktop`) uses CGo to link native OS window/WebView APIs.
+- Platform WebView dependencies (macOS WKWebView, Windows WebView2, or Linux GTK3/WebKit2GTK). Note: while the SDK is 100% pure Go (`CGO_ENABLED=0`), building the native Wails desktop binary (`cmd/vocab-desktop`) uses CGo to link native OS window/WebView APIs.
 
 ### Build and Install on macOS
 
-Clone this repository and run the commands below from its root. Install Go and
-Bun first. Install Apple's Command Line Tools if needed:
+Clone the repository and run the commands below from its root:
+
+```bash
+git clone https://github.com/veryshyjelly/vocabulary-studio.git
+cd vocabulary-studio
+```
+
+Install Go and Bun first. Install Apple's Command Line Tools if needed:
 
 ```bash
 xcode-select --install
@@ -133,8 +141,8 @@ cd sdk
 CGO_ENABLED=0 go test -v ./...
 cd ..
 
-# Run compatibility, CLI, and desktop-service tests
-CGO_ENABLED=0 go test -v . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
+# Run CLI and desktop-service tests
+CGO_ENABLED=0 go test -v ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
 
 # Run the SDK race detector and static analysis
 cd sdk

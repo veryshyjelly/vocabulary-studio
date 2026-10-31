@@ -1,9 +1,9 @@
-module github.com/veryshyjelly/vocabulary_go
+module github.com/veryshyjelly/vocabulary-studio
 
 go 1.27.3
 
 require (
-	github.com/veryshyjelly/vocabulary_go/sdk v0.0.0
+	github.com/veryshyjelly/vocabulary-studio/sdk v0.0.0
 	github.com/wailsapp/wails/v3 v3.0.0
 	golang.org/x/net v0.62.0
 	gopkg.in/dnaeon/go-vcr.v4 v4.0.7
@@ -27,4 +27,4 @@ require (
 	golang.org/x/time v0.16.0 // indirect
 )
 
-replace github.com/veryshyjelly/vocabulary_go/sdk => ./sdk
+replace github.com/veryshyjelly/vocabulary-studio/sdk => ./sdk

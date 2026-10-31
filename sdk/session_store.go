@@ -343,6 +343,7 @@ type KeyringSessionStore struct {
 // NewKeyringSessionStore creates an OS-keychain backed SessionStore.
 func NewKeyringSessionStore(service, account string) *KeyringSessionStore {
 	if service == "" {
+		// Persisted storage identifier, independent of the repository/module name.
 		service = "vocabulary_go"
 	}
 	if account == "" {

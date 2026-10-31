@@ -11,10 +11,10 @@ import (
 	"sync"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
-// Hub coordinates the vocabulary_go Client, active learning sessions (Trainer, Bee, Quiz),
+// Hub coordinates the SDK client, active learning sessions (Trainer, Bee, Quiz),
 // user preferences, and per-operation context cancellation for the Wails desktop application.
 //
 // Hub is safe for concurrent use by multiple goroutines.

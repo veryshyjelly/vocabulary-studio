@@ -16,7 +16,7 @@ test-sdk:
 	cd sdk && CGO_ENABLED=0 go test ./...
 
 test-desktop:
-	CGO_ENABLED=0 go test . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
+	CGO_ENABLED=0 go test ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
 
 test-frontend:
 	cd frontend && bun install --frozen-lockfile && bun run typecheck --noUnusedLocals && bun run test

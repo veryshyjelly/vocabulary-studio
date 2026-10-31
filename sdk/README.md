@@ -6,7 +6,7 @@ lists, learning progress, VocabTrainer, Spelling Bee, and quizzes.
 This directory is its own Go module:
 
 ```go
-import vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+import vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 ```
 
 It has no dependency on Wails, React, Bun, or desktop assets. The desktop app and
@@ -22,7 +22,7 @@ import (
     "fmt"
     "log"
 
-    vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+    vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 func main() {
@@ -41,8 +41,8 @@ func main() {
 For another local Go project, require the module and point it at this checkout:
 
 ```sh
-go mod edit -require=github.com/veryshyjelly/vocabulary_go/sdk@v0.0.0
-go mod edit -replace=github.com/veryshyjelly/vocabulary_go/sdk=/absolute/path/to/vocabulary_go/sdk
+go mod edit -require=github.com/veryshyjelly/vocabulary-studio/sdk@v0.0.0
+go mod edit -replace=github.com/veryshyjelly/vocabulary-studio/sdk=/absolute/path/to/vocabulary-studio/sdk
 go mod tidy
 ```
 
@@ -70,11 +70,7 @@ Other service files follow their domain names. Tests sit beside their subjects;
 To refresh live fixtures from the repository root, use
 `go run ./cmd/record-fixtures`; its default output is `sdk/testdata/cassettes/`.
 
-## Compatibility and releases
-
-The original `github.com/veryshyjelly/vocabulary_go` import remains a deprecated
-compatibility facade. It aliases the canonical SDK types and delegates functions;
-new code should import this module directly.
+## Releases
 
 The root module currently uses `v0.0.0` with a local replacement for development.
 Before publishing a root-module release, publish the SDK with a submodule tag such

@@ -18,12 +18,12 @@ import * as $models from "./models.js";
  * GetPreferences returns the current AppPreferences.
  */
 export function GetPreferences(): $CancellablePromise<$models.AppPreferences> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.SettingsService.GetPreferences");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.SettingsService.GetPreferences");
 }
 
 /**
  * UpdatePreferences updates theme, pronunciation accent, default view, and optionally session store mode.
  */
 export function UpdatePreferences(updated: $models.AppPreferences): $CancellablePromise<$models.AppPreferences | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.SettingsService.UpdatePreferences", updated);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.SettingsService.UpdatePreferences", updated);
 }

@@ -23,40 +23,40 @@ import * as $models from "./models.js";
  * GetRootCategories returns Vocabulary.com's 9 curated root collection categories.
  */
 export function GetRootCategories(): $CancellablePromise<$models.CategoryCardDTO[] | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.GetRootCategories");
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.GetRootCategories");
 }
 
 /**
  * GetUnit fetches a single curated Unit/Collection and its sub-lists (`GET /1.0/units/{unitId}`).
  */
 export function GetUnit(unitID: string): $CancellablePromise<vocab$0.UnitsResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.GetUnit", unitID);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.GetUnit", unitID);
 }
 
 /**
  * GetWordOfTheDay fetches the Word of the Day for `date` (`YYYY-MM-DD`, or `""` for today).
  */
 export function GetWordOfTheDay(date: string): $CancellablePromise<vocab$0.WordOfTheDayEntry | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.GetWordOfTheDay", date);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.GetWordOfTheDay", date);
 }
 
 /**
  * GetWordOfTheDayArchive fetches the monthly Word of the Day archive (`YYYYMM`, e.g. `202610`).
  */
 export function GetWordOfTheDayArchive(startYearMonth: number, numMonths: number): $CancellablePromise<vocab$0.WODArchiveResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.GetWordOfTheDayArchive", startYearMonth, numMonths);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.GetWordOfTheDayArchive", startYearMonth, numMonths);
 }
 
 /**
  * SearchUnits searches or browses curated Units/Collections (`GET /1.0/units`).
  */
 export function SearchUnits(query: string, categoryUnitID: string, skip: number, limit: number): $CancellablePromise<vocab$0.UnitsResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.SearchUnits", query, categoryUnitID, skip, limit);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.SearchUnits", query, categoryUnitID, skip, limit);
 }
 
 /**
  * WordFinder searches words by pattern (`startingwith`, `endingwith`, `containinginorder`, `including`) and length.
  */
 export function WordFinder(searchText: string, searchLocation: string, numLetters: number, maxResults: number): $CancellablePromise<vocab$0.WordFinderResponse | null> {
-    return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.DiscoveryService.WordFinder", searchText, searchLocation, numLetters, maxResults);
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.DiscoveryService.WordFinder", searchText, searchLocation, numLetters, maxResults);
 }

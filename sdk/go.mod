@@ -1,4 +1,4 @@
-module github.com/veryshyjelly/vocabulary_go/sdk
+module github.com/veryshyjelly/vocabulary-studio/sdk
 
 go 1.27.3
 

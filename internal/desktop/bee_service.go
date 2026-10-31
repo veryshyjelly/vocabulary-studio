@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 // StartBee starts or resumes a Spelling Bee session for `listID`.

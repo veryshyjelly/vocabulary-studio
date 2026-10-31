@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
+	vocab "github.com/veryshyjelly/vocabulary-studio/sdk"
 )
 
 // AuthService exposes authentication and session lifecycle methods to the Wails frontend.

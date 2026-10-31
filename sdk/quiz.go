@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/veryshyjelly/vocabulary_go/sdk/internal/htmlparse"
+	"github.com/veryshyjelly/vocabulary-studio/sdk/internal/htmlparse"
 )
 
 // QuizQuestionResult is the parsed result of an answered quiz question.
