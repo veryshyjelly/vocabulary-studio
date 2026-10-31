@@ -13,7 +13,7 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as htmlparse$0 from "../htmlparse/models.js";
+import * as vocab$0 from "../../sdk/models.js";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -29,7 +29,7 @@ export function EndSession(): $CancellablePromise<void> {
 /**
  * GetQuizResults fetches the per-question breakdown for a completed quiz.
  */
-export function GetQuizResults(activityID: string): $CancellablePromise<htmlparse$0.QuizQuestionResult[] | null> {
+export function GetQuizResults(activityID: string): $CancellablePromise<vocab$0.QuizQuestionResult[] | null> {
     return $Call.ByName("github.com/veryshyjelly/vocabulary_go/internal/desktop.TrainerService.GetQuizResults", activityID);
 }
 

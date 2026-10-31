@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	vocab "github.com/veryshyjelly/vocabulary_go"
+	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
 )
 
 func TestCLICommandsAndInteractivePlay(t *testing.T) {

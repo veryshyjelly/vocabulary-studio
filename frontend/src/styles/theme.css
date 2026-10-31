@@ -1,0 +1,159 @@
+@theme {
+  --font-sans: "Monaspace Argon", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-mono: "Monaspace Krypton", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-micro: 0.6875rem;
+  --text-micro--line-height: 1rem;
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1.125rem;
+  --text-ui: 0.8125rem;
+  --text-ui--line-height: 1.25rem;
+  --text-read: 1.0625rem;
+  --text-read--line-height: 1.65;
+  --text-read-lg: 1.25rem;
+  --text-read-lg--line-height: 1.55;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.875rem;
+  --radius-chip: 0.375rem;
+
+  --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  --breakpoint-wide: 64rem;
+
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
+  --text-word: clamp(2rem, 4vw, 3.25rem);
+  --text-word--line-height: 1.12;
+  --text-question: clamp(1.375rem, 2.5vw, 1.75rem);
+  --text-question--line-height: 1.45;
+
+  --animate-enter: enter 240ms var(--ease-out-soft) both;
+  --animate-fade: fade 180ms ease-out both;
+  --animate-pop: pop 320ms var(--ease-spring) both;
+  --animate-shake: shake 360ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  --animate-toast: toast-in 260ms var(--ease-out-soft) both;
+  --animate-dialog: dialog-in 220ms var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes pop {
+    0% {
+      transform: scale(0.96);
+    }
+    60% {
+      transform: scale(1.012);
+    }
+    100% {
+      transform: none;
+    }
+  }
+  @keyframes shake {
+    10%,
+    90% {
+      transform: translateX(-1px);
+    }
+    20%,
+    80% {
+      transform: translateX(2px);
+    }
+    30%,
+    50%,
+    70% {
+      transform: translateX(-3px);
+    }
+    40%,
+    60% {
+      transform: translateX(3px);
+    }
+  }
+  @keyframes toast-in {
+    from {
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  @keyframes shimmer {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.45;
+    }
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--c-canvas);
+  --color-surface: var(--c-surface);
+  --color-sunken: var(--c-sunken);
+  --color-raised: var(--c-raised);
+  --color-overlay: var(--c-overlay);
+  --color-line: var(--c-line);
+  --color-line-strong: var(--c-line-strong);
+  --color-ink: var(--c-ink);
+  --color-ink-muted: var(--c-ink-muted);
+  --color-ink-subtle: var(--c-ink-subtle);
+  --color-accent: var(--c-accent);
+  --color-accent-hover: var(--c-accent-hover);
+  --color-on-accent: var(--c-on-accent);
+  --color-accent-ink: var(--c-accent-ink);
+  --color-accent-soft: var(--c-accent-soft);
+  --color-accent-soft-hover: var(--c-accent-soft-hover);
+  --color-accent-line: var(--c-accent-line);
+  --color-focus: var(--c-focus);
+  --color-success: var(--c-success);
+  --color-on-success: var(--c-on-success);
+  --color-success-ink: var(--c-success-ink);
+  --color-success-soft: var(--c-success-soft);
+  --color-success-line: var(--c-success-line);
+  --color-danger: var(--c-danger);
+  --color-on-danger: var(--c-on-danger);
+  --color-danger-hover: var(--c-danger-hover);
+  --color-danger-ink: var(--c-danger-ink);
+  --color-danger-soft: var(--c-danger-soft);
+  --color-danger-line: var(--c-danger-line);
+  --color-warning: var(--c-warning);
+  --color-on-warning: var(--c-on-warning);
+  --color-warning-ink: var(--c-warning-ink);
+  --color-warning-soft: var(--c-warning-soft);
+  --color-warning-line: var(--c-warning-line);
+
+  --shadow-card: var(--sh-card);
+  --shadow-raised: var(--sh-raised);
+  --shadow-pop: var(--sh-pop);
+}
+

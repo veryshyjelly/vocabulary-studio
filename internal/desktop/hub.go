@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go"
+	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
 )
 
 // Hub coordinates the vocabulary_go Client, active learning sessions (Trainer, Bee, Quiz),

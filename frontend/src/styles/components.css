@@ -1,0 +1,93 @@
+@layer components {
+  .page-content {
+    padding: 2rem var(--space-page) 3.5rem;
+  }
+
+  .study-sheet {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--c-line);
+    background: var(--c-surface);
+    box-shadow: var(--sh-card);
+  }
+
+  .study-content {
+    padding: var(--space-sheet);
+  }
+
+  .question-prompt {
+    font-family: var(--font-stack-read);
+    font-size: var(--text-question);
+    line-height: var(--text-question--line-height);
+    overflow-wrap: anywhere;
+  }
+
+  .question-prompt strong {
+    font-size: 1.12em;
+    font-weight: 600;
+  }
+
+  .answer-choice {
+    min-height: 3.25rem;
+    align-items: center;
+  }
+
+  .answer-choice:focus-visible {
+    outline-offset: 3px;
+  }
+
+  .dictionary-hero {
+    padding: 1.5rem 0 2rem;
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .reading-copy {
+    max-width: var(--reading-measure);
+    font-family: var(--font-stack-read);
+    font-size: var(--text-read);
+    line-height: 1.7;
+    overflow-wrap: break-word;
+  }
+
+  .library-item {
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    background: var(--c-surface);
+    transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  }
+
+  .library-item:hover, .library-item:focus-within {
+    border-color: var(--c-accent-line);
+    box-shadow: var(--sh-card);
+  }
+
+  .settings-section {
+    border-top: 1px solid var(--c-line);
+    padding-top: var(--space-section);
+  }
+
+  .theme-swatch {
+    height: 3.5rem;
+    border-radius: var(--radius-chip);
+    border: 1px solid var(--c-line);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 22% 1fr;
+    background: var(--preview-bg);
+    color: var(--preview-ink);
+  }
+
+  .theme-swatch[data-appearance="light"] {
+    --preview-bg: oklch(0.982 0.004 86);
+    --preview-ink: oklch(0.235 0.012 78);
+  }
+  .theme-swatch[data-appearance="dark"] {
+    --preview-bg: oklch(0.205 0.006 75);
+    --preview-ink: oklch(0.935 0.008 85);
+  }
+  .theme-swatch[data-appearance="system"] {
+    --preview-bg: var(--c-surface);
+    --preview-ink: var(--c-ink);
+  }
+  .theme-swatch > span:first-child { background: color-mix(in oklch, var(--preview-ink) 8%, var(--preview-bg)); }
+}
+

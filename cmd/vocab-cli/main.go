@@ -15,7 +15,7 @@ import (
 	"syscall"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go"
+	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
 )
 
 func main() {

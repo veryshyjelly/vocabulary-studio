@@ -3,7 +3,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as vocab$0 from "../../models.js";
+import * as vocab$0 from "../../sdk/models.js";
 
 /**
  * AccountStatusDTO contains strictly non-sensitive user identity and subscription state.

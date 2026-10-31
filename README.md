@@ -6,9 +6,12 @@ A complete Vocabulary.com Go SDK (`vocabulary_go`) and cross-platform native des
 
 ## 1. Architecture Overview
 
-The repository is structured into three cleanly separated layers:
+The repository has two Go modules: a reusable SDK in `sdk/` and the root application module, which consumes it through a local `replace` directive. The deprecated root SDK import remains available through `sdk_compat.go`. See [the project structure](docs/ARCHITECTURE.md) for the directory map and dependency boundaries.
 
-1. **Core Go SDK (`github.com/veryshyjelly/vocabulary_go` root package + `internal/htmlparse`)**:
+The product is structured into three layers:
+
+1. **Standalone Go SDK ([`sdk/`](sdk/README.md), module `github.com/veryshyjelly/vocabulary_go/sdk`)**:
+   - Its own `go.mod`, domain tests, `testdata/`, and private `internal/htmlparse/` parsers. No Wails or frontend dependency.
    - **100% Pure Go (`CGO_ENABLED=0`)**: Zero CGo dependencies in the SDK layer.
    - **Dual-Stage Authentication**: Manages web session cookies (`SESSION`, `guid`, `tz`, `__cf_bm`) and `singleflight`-deduplicated Bearer JWTs (`POST https://api.vocabulary.com/1.0/auth/token`).
    - **Protocol-Accurate Gameplay & Anti-Cheat Pacing**: Implements VocabTrainer (`v=4`), List Practice (`v=3`), Spelling Bee, and Quizzes. `PacingGuard` enforces minimum response times (`>= 950ms` 1st try, `>= 475ms` retry, `>= 1550ms` quiz submit) and reserves slots in the 30.5-second rolling window (`< 10` answers per `30s`) to prevent triggering Vocabulary.com's 5-minute cooldown lockout.
@@ -20,6 +23,7 @@ The repository is structured into three cleanly separated layers:
    - **HTML Sanitization at the Boundary**: Parses inline HTML blurbs and question prompts into structured `RichSpan` arrays (`text`, `bold`, `italic`) in Go so React never uses `dangerouslySetInnerHTML`.
    - **Per-Operation Context Cancellation**: Automatically cancels obsolete in-flight autocomplete, dictionary lookup, and list search requests.
 3. **Frontend Layer (`frontend/`)**:
+   - `src/app/` owns the shell, `src/features/` groups screens by domain, `src/components/` contains reusable UI, and `src/styles/` contains the design system. Visual fixtures and test setup live in `frontend/tests/`.
    - Built with React 19, TypeScript, Vite, Tailwind CSS v4, and Lucide icons using **Bun**.
    - Seven cohesive navigation destinations:
      - **Home**: Continue Learning hero, Word of the Day, 7-day study effort, in-progress activities, words needing attention, recent lists, and recent lookups.
@@ -121,11 +125,22 @@ go build -o bin/vocab-desktop ./cmd/vocab-desktop
 
 ### Run All Tests & Checks (100% Offline)
 ```bash
-# Run pure-Go SDK, HTML parser, CLI, and Desktop service tests
+# Run every module and the frontend
+make test
+
+# Or run the standalone SDK and its parsers independently
+cd sdk
+CGO_ENABLED=0 go test -v ./...
+cd ..
+
+# Run compatibility, CLI, and desktop-service tests
 CGO_ENABLED=0 go test -v . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
 
-# Run Go race detector and static analysis
-CGO_ENABLED=1 go test -race . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
+# Run the SDK race detector and static analysis
+cd sdk
+CGO_ENABLED=1 go test -race ./...
+go vet ./...
+cd ..
 go vet ./...
 
 # Run Frontend Vitest + React Testing Library suite
@@ -150,9 +165,10 @@ go run ./cmd/vocab-cli play
 
 ## UI development and visual checks
 
-The shared design tokens and typography roles live in `frontend/src/index.css`.
-See [UI refinement and validation](docs/UI_REFINEMENT.md) for design decisions,
-rendered screenshots, font verification, and validation limits.
+The stylesheet entry is `frontend/src/index.css`; fonts, tokens, typography, and
+component styles are separated under `frontend/src/styles/`. Shared controls live
+in `frontend/src/components/ui/`; screens live in `frontend/src/features/`.
+See [the project structure](docs/ARCHITECTURE.md) for ownership and build workflows.
 
 For isolated visual checks, run `cd frontend && bun run dev`, then open
 `http://localhost:5173/tests/preview.html?screen=practice&scenario=spelling&theme=dark`.

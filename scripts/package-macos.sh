@@ -52,18 +52,9 @@ from pathlib import Path
 
 app = Path(sys.argv[1])
 version = json.loads(Path("frontend/package.json").read_text())["version"]
-info = {
-    "CFBundlePackageType": "APPL",
-    "CFBundleName": "Vocabulary Studio",
-    "CFBundleDisplayName": "Vocabulary Studio",
-    "CFBundleExecutable": "vocab-desktop",
-    "CFBundleIdentifier": "com.veryshyjelly.vocabularystudio",
-    "CFBundleVersion": version,
-    "CFBundleShortVersionString": version,
-    "CFBundleIconFile": "icons",
-    "LSMinimumSystemVersion": "12.0",
-    "NSHighResolutionCapable": True,
-}
+info = plistlib.loads(Path("build/macos/Info.plist").read_bytes())
+info["CFBundleVersion"] = version
+info["CFBundleShortVersionString"] = version
 (app / "Contents/Info.plist").write_bytes(plistlib.dumps(info))
 PY
 

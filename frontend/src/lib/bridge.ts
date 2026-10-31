@@ -1,12 +1,4 @@
-import {
-  AuthService,
-  DictionaryService,
-  DiscoveryService,
-  ListsService,
-  ProgressService,
-  SettingsService,
-  TrainerService,
-} from "../bindings/github.com/veryshyjelly/vocabulary_go/internal/desktop/index.js";
+import { AuthService, DictionaryService, DiscoveryService, ListsService, ProgressService, SettingsService, TrainerService } from "../bindings/github.com/veryshyjelly/vocabulary_go/internal/desktop/index.js";
 
 export type {
   AccountStatusDTO,
@@ -25,6 +17,8 @@ export type {
   TrainerSessionStateDTO,
   WordDetailDTO,
 } from "../bindings/github.com/veryshyjelly/vocabulary_go/internal/desktop/models.js";
+
+export { TrainerSessionState } from "../bindings/github.com/veryshyjelly/vocabulary_go/sdk/models.js";
 
 export { SessionStoreMode } from "../bindings/github.com/veryshyjelly/vocabulary_go/internal/desktop/models.js";
 
@@ -53,9 +47,9 @@ export type {
   WordFinderResponse,
   WordOfTheDayEntry,
   WordProgressDetail,
-} from "../bindings/github.com/veryshyjelly/vocabulary_go/models.js";
+} from "../bindings/github.com/veryshyjelly/vocabulary_go/sdk/models.js";
 
-export type { QuizQuestionResult } from "../bindings/github.com/veryshyjelly/vocabulary_go/internal/htmlparse/models.js";
+export type { QuizQuestionResult } from "../bindings/github.com/veryshyjelly/vocabulary_go/sdk/internal/htmlparse/models.js";
 
 export interface DesktopBridge {
   auth: typeof AuthService;

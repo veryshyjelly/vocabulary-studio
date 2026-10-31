@@ -10,7 +10,7 @@ import (
 	"sync"
 	"testing"
 
-	vocab "github.com/veryshyjelly/vocabulary_go"
+	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
 )
 
 func TestParseSafeRichSpansSanitizesHTML(t *testing.T) {

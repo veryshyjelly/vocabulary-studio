@@ -1,0 +1,128 @@
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+
+:root {
+  color-scheme: light;
+
+  --mono-fallback: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-stack-ui: "Monaspace Argon", var(--mono-fallback);
+  --font-stack-nav: "Monaspace Neon", var(--mono-fallback);
+  --font-stack-word: "Monaspace Xenon", var(--mono-fallback);
+  --font-stack-data: "Monaspace Krypton", var(--mono-fallback);
+  --font-stack-ipa: "Monaspace Krypton", "DejaVu Sans", "Lucida Sans Unicode", Arial, sans-serif;
+  --font-stack-note: "Monaspace Radon", var(--mono-fallback);
+  /* Long-form reading stays proportional: platform reading serifs, no download needed. */
+  --font-stack-read: ui-serif, "New York", "Iowan Old Style", "Charter", "Source Serif 4", Georgia,
+    Cambria, "Noto Serif", serif;
+
+  /* Texture healing on, programming ligatures off. */
+  --mono-features: "calt" 1, "liga" 0, "dlig" 0;
+
+  /* Surfaces */
+  --c-canvas: oklch(0.982 0.004 86);
+  --c-surface: oklch(0.998 0.0015 86);
+  --c-sunken: oklch(0.962 0.006 86);
+  --c-raised: oklch(1 0 0);
+  --c-overlay: oklch(0.2 0.01 80 / 0.42);
+
+  /* Lines */
+  --c-line: oklch(0.912 0.007 86);
+  --c-line-strong: oklch(0.85 0.01 86);
+
+  /* Text */
+  --c-ink: oklch(0.235 0.012 78);
+  --c-ink-muted: oklch(0.43 0.012 78);
+  --c-ink-subtle: oklch(0.49 0.011 78);
+
+  --space-page: clamp(1.25rem, 3vw, 2.5rem);
+  --space-section: 1.5rem;
+  --space-sheet: clamp(1.5rem, 3vw, 2rem);
+  --reading-measure: 65ch;
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
+
+  /* Brand accent: deep vocabulary green */
+  --c-accent: oklch(0.47 0.105 163);
+  --c-accent-hover: oklch(0.41 0.095 163);
+  --c-on-accent: oklch(0.99 0.01 163);
+  --c-accent-ink: oklch(0.42 0.095 163);
+  --c-accent-soft: oklch(0.955 0.03 163);
+  --c-accent-soft-hover: oklch(0.925 0.045 163);
+  --c-accent-line: oklch(0.8 0.075 163);
+  --c-focus: oklch(0.56 0.13 163);
+
+  /* Feedback */
+  --c-success: oklch(0.52 0.13 150);
+  --c-on-success: oklch(0.99 0.005 150);
+  --c-success-ink: oklch(0.4 0.1 150);
+  --c-success-soft: oklch(0.955 0.04 150);
+  --c-success-line: oklch(0.76 0.1 150);
+
+  --c-danger: oklch(0.53 0.17 22);
+  --c-on-danger: oklch(0.99 0.005 22);
+  --c-danger-hover: oklch(0.47 0.16 22);
+  --c-danger-ink: oklch(0.45 0.15 22);
+  --c-danger-soft: oklch(0.965 0.02 22);
+  --c-danger-line: oklch(0.82 0.08 22);
+
+  --c-warning: oklch(0.7 0.14 70);
+  --c-on-warning: oklch(0.2 0.02 70);
+  --c-warning-ink: oklch(0.46 0.1 62);
+  --c-warning-soft: oklch(0.97 0.035 82);
+  --c-warning-line: oklch(0.85 0.09 78);
+
+  /* Elevation */
+  --sh-card: 0 1px 0 oklch(0.2 0.01 80 / 0.03), 0 1px 2px oklch(0.2 0.01 80 / 0.04);
+  --sh-raised: 0 1px 2px oklch(0.2 0.01 80 / 0.05), 0 6px 16px -6px oklch(0.2 0.01 80 / 0.12);
+  --sh-pop: 0 2px 4px oklch(0.2 0.01 80 / 0.06), 0 18px 40px -12px oklch(0.2 0.01 80 / 0.22);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --c-canvas: oklch(0.172 0.005 75);
+  --c-surface: oklch(0.205 0.006 75);
+  --c-sunken: oklch(0.155 0.005 75);
+  --c-raised: oklch(0.235 0.007 75);
+  --c-overlay: oklch(0.08 0.005 75 / 0.62);
+
+  --c-line: oklch(0.285 0.008 75);
+  --c-line-strong: oklch(0.36 0.01 75);
+
+  --c-ink: oklch(0.935 0.008 85);
+  --c-ink-muted: oklch(0.76 0.01 85);
+  --c-ink-subtle: oklch(0.62 0.01 85);
+
+  --c-accent: oklch(0.78 0.13 163);
+  --c-accent-hover: oklch(0.84 0.12 163);
+  --c-on-accent: oklch(0.2 0.04 163);
+  --c-accent-ink: oklch(0.8 0.12 163);
+  --c-accent-soft: oklch(0.27 0.045 163);
+  --c-accent-soft-hover: oklch(0.31 0.055 163);
+  --c-accent-line: oklch(0.45 0.08 163);
+  --c-focus: oklch(0.74 0.13 163);
+
+  --c-success: oklch(0.74 0.15 150);
+  --c-on-success: oklch(0.18 0.03 150);
+  --c-success-ink: oklch(0.8 0.13 150);
+  --c-success-soft: oklch(0.26 0.05 150);
+  --c-success-line: oklch(0.46 0.09 150);
+
+  --c-danger: oklch(0.66 0.17 22);
+  --c-on-danger: oklch(0.15 0.025 22);
+  --c-danger-hover: oklch(0.71 0.16 22);
+  --c-danger-ink: oklch(0.78 0.12 22);
+  --c-danger-soft: oklch(0.25 0.05 22);
+  --c-danger-line: oklch(0.45 0.1 22);
+
+  --c-warning: oklch(0.8 0.14 78);
+  --c-warning-ink: oklch(0.85 0.11 82);
+  --c-warning-soft: oklch(0.26 0.045 78);
+  --c-warning-line: oklch(0.45 0.08 78);
+
+  --sh-card: 0 1px 0 oklch(1 0 0 / 0.025) inset, 0 1px 2px oklch(0 0 0 / 0.3);
+  --sh-raised: 0 1px 0 oklch(1 0 0 / 0.03) inset, 0 8px 20px -8px oklch(0 0 0 / 0.55);
+  --sh-pop: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 24px 48px -12px oklch(0 0 0 / 0.7);
+}
+

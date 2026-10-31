@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	vocab "github.com/veryshyjelly/vocabulary_go"
+	vocab "github.com/veryshyjelly/vocabulary_go/sdk"
 	"gopkg.in/dnaeon/go-vcr.v4/pkg/cassette"
 	"gopkg.in/dnaeon/go-vcr.v4/pkg/recorder"
 )
@@ -22,7 +22,7 @@ func main() {
 
 	var outDir string
 	var sessionFile string
-	flag.StringVar(&outDir, "out", "testdata/cassettes", "Output directory for scrubbed go-vcr cassettes")
+	flag.StringVar(&outDir, "out", "sdk/testdata/cassettes", "Output directory for scrubbed go-vcr cassettes")
 	flag.StringVar(&sessionFile, "session", ".scratch/session.json", "Path to cached session file")
 	flag.Parse()
 

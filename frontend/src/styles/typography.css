@@ -1,0 +1,80 @@
+/* ------------------------------------------------------------------ */
+/* Type roles                                                          */
+/* ------------------------------------------------------------------ */
+
+/* Interface copy, labels, metadata. */
+@utility font-ui {
+  font-family: var(--font-stack-ui);
+  font-feature-settings: var(--mono-features);
+}
+
+/* Navigation, tabs, buttons and other controls. */
+@utility font-nav {
+  font-family: var(--font-stack-nav);
+  font-feature-settings: var(--mono-features);
+}
+
+/* Featured vocabulary words. */
+@utility font-word {
+  font-family: var(--font-stack-word);
+  font-feature-settings: var(--mono-features);
+  letter-spacing: -0.01em;
+}
+
+/* Statistics, scores, counts, IPA. */
+@utility font-data {
+  font-family: var(--font-stack-data);
+  font-feature-settings: var(--mono-features);
+}
+
+/* Sparse annotations: citations and hint labels. */
+@utility font-note {
+  font-family: var(--font-stack-note);
+  font-feature-settings: var(--mono-features);
+}
+
+@utility font-ipa {
+  font-family: var(--font-stack-ipa);
+  font-feature-settings: "calt" 1, "liga" 0;
+  font-variant-ligatures: no-common-ligatures;
+  letter-spacing: 0;
+}
+
+@utility word-display {
+  font-family: var(--font-stack-word);
+  font-size: var(--text-word);
+  line-height: var(--text-word--line-height);
+  font-weight: 560;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+/* Long-form reading: definitions, blurbs, passages, example sentences. */
+@utility font-read {
+  font-family: var(--font-stack-read);
+  font-feature-settings: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  letter-spacing: 0;
+}
+
+/* Small uppercase section label. "case" lifts punctuation to cap height. */
+@utility eyebrow {
+  font-family: var(--font-stack-nav);
+  font-feature-settings: var(--mono-features), "case" 1;
+  font-size: var(--text-micro);
+  line-height: var(--text-micro--line-height);
+  font-weight: 560;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Highlighted target word inside corpus sentences and passages. */
+@utility word-mark {
+  font-weight: 650;
+  color: var(--c-accent-ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--c-accent) 40%, transparent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
