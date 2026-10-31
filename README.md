@@ -67,7 +67,7 @@ go build -o bin/vocab-desktop ./cmd/vocab-desktop
 CGO_ENABLED=0 go test -v . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
 
 # Run Go race detector and static analysis
-CGO_ENABLED=0 go test -race . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
+CGO_ENABLED=1 go test -race . ./internal/... ./cmd/vocab-cli ./cmd/record-fixtures
 go vet ./...
 
 # Run Frontend Vitest + React Testing Library suite
@@ -89,3 +89,16 @@ go run ./cmd/vocab-cli wod
 go run ./cmd/vocab-cli search-lists gre
 go run ./cmd/vocab-cli play
 ```
+
+## UI development and visual checks
+
+The shared design tokens and typography roles live in `frontend/src/index.css`.
+See [UI refinement and validation](docs/UI_REFINEMENT.md) for design decisions,
+rendered screenshots, font verification, and validation limits.
+
+For isolated visual checks, run `cd frontend && bun run dev`, then open
+`http://localhost:5173/tests/preview.html?screen=practice&scenario=spelling&theme=dark`.
+This development-only entry uses sample data and never enters the production bundle.
+Available scenarios include `choices`, `spelling`, `images`, `long`, `empty`,
+`error`, `loading`, and `auth`; the `screen` parameter selects an application section.
+Use the Wails application to validate real account and SDK behavior.

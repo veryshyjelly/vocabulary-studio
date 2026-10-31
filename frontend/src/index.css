@@ -11,7 +11,25 @@
   src: url("/fonts/monaspace/MonaspaceArgonVar.woff2") format("woff2");
   font-weight: 200 800;
   font-stretch: 100% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Argon";
+  src: url("/fonts/monaspace/MonaspaceArgonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
   font-style: oblique 0deg 11deg;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Neon";
+  src: url("/fonts/monaspace/MonaspaceNeonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -29,6 +47,15 @@
   src: url("/fonts/monaspace/MonaspaceXenonVar.woff2") format("woff2");
   font-weight: 200 800;
   font-stretch: 100% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Xenon";
+  src: url("/fonts/monaspace/MonaspaceXenonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
   font-style: oblique 0deg 11deg;
   font-display: swap;
 }
@@ -38,7 +65,25 @@
   src: url("/fonts/monaspace/MonaspaceKryptonVar.woff2") format("woff2");
   font-weight: 200 800;
   font-stretch: 100% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Krypton";
+  src: url("/fonts/monaspace/MonaspaceKryptonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
   font-style: oblique 0deg 11deg;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Monaspace Radon";
+  src: url("/fonts/monaspace/MonaspaceRadonVar.woff2") format("woff2");
+  font-weight: 200 800;
+  font-stretch: 100% 125%;
+  font-style: normal;
   font-display: swap;
 }
 
@@ -63,6 +108,7 @@
   --font-stack-nav: "Monaspace Neon", var(--mono-fallback);
   --font-stack-word: "Monaspace Xenon", var(--mono-fallback);
   --font-stack-data: "Monaspace Krypton", var(--mono-fallback);
+  --font-stack-ipa: "Monaspace Krypton", "DejaVu Sans", "Lucida Sans Unicode", Arial, sans-serif;
   --font-stack-note: "Monaspace Radon", var(--mono-fallback);
   /* Long-form reading stays proportional: platform reading serifs, no download needed. */
   --font-stack-read: ui-serif, "New York", "Iowan Old Style", "Charter", "Source Serif 4", Georgia,
@@ -85,7 +131,14 @@
   /* Text */
   --c-ink: oklch(0.235 0.012 78);
   --c-ink-muted: oklch(0.43 0.012 78);
-  --c-ink-subtle: oklch(0.56 0.011 78);
+  --c-ink-subtle: oklch(0.49 0.011 78);
+
+  --space-page: clamp(1.25rem, 3vw, 2.5rem);
+  --space-section: 1.5rem;
+  --space-sheet: clamp(1.5rem, 3vw, 2rem);
+  --reading-measure: 65ch;
+  --duration-fast: 140ms;
+  --duration-normal: 200ms;
 
   /* Brand accent: deep vocabulary green */
   --c-accent: oklch(0.47 0.105 163);
@@ -99,17 +152,20 @@
 
   /* Feedback */
   --c-success: oklch(0.52 0.13 150);
+  --c-on-success: oklch(0.99 0.005 150);
   --c-success-ink: oklch(0.4 0.1 150);
   --c-success-soft: oklch(0.955 0.04 150);
   --c-success-line: oklch(0.76 0.1 150);
 
   --c-danger: oklch(0.53 0.17 22);
+  --c-on-danger: oklch(0.99 0.005 22);
   --c-danger-hover: oklch(0.47 0.16 22);
   --c-danger-ink: oklch(0.45 0.15 22);
   --c-danger-soft: oklch(0.965 0.02 22);
   --c-danger-line: oklch(0.82 0.08 22);
 
   --c-warning: oklch(0.7 0.14 70);
+  --c-on-warning: oklch(0.2 0.02 70);
   --c-warning-ink: oklch(0.46 0.1 62);
   --c-warning-soft: oklch(0.97 0.035 82);
   --c-warning-line: oklch(0.85 0.09 78);
@@ -146,11 +202,13 @@
   --c-focus: oklch(0.74 0.13 163);
 
   --c-success: oklch(0.74 0.15 150);
+  --c-on-success: oklch(0.18 0.03 150);
   --c-success-ink: oklch(0.8 0.13 150);
   --c-success-soft: oklch(0.26 0.05 150);
   --c-success-line: oklch(0.46 0.09 150);
 
   --c-danger: oklch(0.66 0.17 22);
+  --c-on-danger: oklch(0.15 0.025 22);
   --c-danger-hover: oklch(0.71 0.16 22);
   --c-danger-ink: oklch(0.78 0.12 22);
   --c-danger-soft: oklch(0.25 0.05 22);
@@ -188,7 +246,14 @@
   --ease-out-soft: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 
-  --breakpoint-wide: 72rem;
+  --breakpoint-wide: 64rem;
+
+  --text-title: 1.75rem;
+  --text-title--line-height: 1.2;
+  --text-word: clamp(2rem, 4vw, 3.25rem);
+  --text-word--line-height: 1.12;
+  --text-question: clamp(1.375rem, 2.5vw, 1.75rem);
+  --text-question--line-height: 1.45;
 
   --animate-enter: enter 240ms var(--ease-out-soft) both;
   --animate-fade: fade 180ms ease-out both;
@@ -297,15 +362,18 @@
   --color-accent-line: var(--c-accent-line);
   --color-focus: var(--c-focus);
   --color-success: var(--c-success);
+  --color-on-success: var(--c-on-success);
   --color-success-ink: var(--c-success-ink);
   --color-success-soft: var(--c-success-soft);
   --color-success-line: var(--c-success-line);
   --color-danger: var(--c-danger);
+  --color-on-danger: var(--c-on-danger);
   --color-danger-hover: var(--c-danger-hover);
   --color-danger-ink: var(--c-danger-ink);
   --color-danger-soft: var(--c-danger-soft);
   --color-danger-line: var(--c-danger-line);
   --color-warning: var(--c-warning);
+  --color-on-warning: var(--c-on-warning);
   --color-warning-ink: var(--c-warning-ink);
   --color-warning-soft: var(--c-warning-soft);
   --color-warning-line: var(--c-warning-line);
@@ -350,6 +418,22 @@
   font-feature-settings: var(--mono-features);
 }
 
+@utility font-ipa {
+  font-family: var(--font-stack-ipa);
+  font-feature-settings: "calt" 1, "liga" 0;
+  font-variant-ligatures: no-common-ligatures;
+  letter-spacing: 0;
+}
+
+@utility word-display {
+  font-family: var(--font-stack-word);
+  font-size: var(--text-word);
+  line-height: var(--text-word--line-height);
+  font-weight: 560;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
 /* Long-form reading: definitions, blurbs, passages, example sentences. */
 @utility font-read {
   font-family: var(--font-stack-read);
@@ -390,6 +474,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    font-synthesis: none;
   }
 
   h1,
@@ -411,11 +496,16 @@
     outline-offset: 2px;
   }
 
-  input:focus-visible,
+  input:not([type="radio"]):not([type="checkbox"]):focus-visible,
   textarea:focus-visible,
   select:focus-visible {
-    outline: none;
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
   }
+
+  input, textarea, select { min-width: 0; }
+  button { -webkit-tap-highlight-color: transparent; }
+  button:disabled { cursor: not-allowed; }
 
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
@@ -438,6 +528,99 @@
   }
 }
 
+@layer components {
+  .page-content {
+    padding: 2rem var(--space-page) 3.5rem;
+  }
+
+  .study-sheet {
+    border-radius: var(--radius-card);
+    border: 1px solid var(--c-line);
+    background: var(--c-surface);
+    box-shadow: var(--sh-card);
+  }
+
+  .study-content {
+    padding: var(--space-sheet);
+  }
+
+  .question-prompt {
+    font-family: var(--font-stack-read);
+    font-size: var(--text-question);
+    line-height: var(--text-question--line-height);
+    overflow-wrap: anywhere;
+  }
+
+  .question-prompt strong {
+    font-size: 1.12em;
+    font-weight: 600;
+  }
+
+  .answer-choice {
+    min-height: 3.25rem;
+    align-items: center;
+  }
+
+  .answer-choice:focus-visible {
+    outline-offset: 3px;
+  }
+
+  .dictionary-hero {
+    padding: 1.5rem 0 2rem;
+    border-bottom: 1px solid var(--c-line);
+  }
+
+  .reading-copy {
+    max-width: var(--reading-measure);
+    font-family: var(--font-stack-read);
+    font-size: var(--text-read);
+    line-height: 1.7;
+    overflow-wrap: break-word;
+  }
+
+  .library-item {
+    border: 1px solid var(--c-line);
+    border-radius: var(--radius-card);
+    background: var(--c-surface);
+    transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
+  }
+
+  .library-item:hover, .library-item:focus-within {
+    border-color: var(--c-accent-line);
+    box-shadow: var(--sh-card);
+  }
+
+  .settings-section {
+    border-top: 1px solid var(--c-line);
+    padding-top: var(--space-section);
+  }
+
+  .theme-swatch {
+    height: 3.5rem;
+    border-radius: var(--radius-chip);
+    border: 1px solid var(--c-line);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 22% 1fr;
+    background: var(--preview-bg);
+    color: var(--preview-ink);
+  }
+
+  .theme-swatch[data-appearance="light"] {
+    --preview-bg: oklch(0.982 0.004 86);
+    --preview-ink: oklch(0.235 0.012 78);
+  }
+  .theme-swatch[data-appearance="dark"] {
+    --preview-bg: oklch(0.205 0.006 75);
+    --preview-ink: oklch(0.935 0.008 85);
+  }
+  .theme-swatch[data-appearance="system"] {
+    --preview-bg: var(--c-surface);
+    --preview-ink: var(--c-ink);
+  }
+  .theme-swatch > span:first-child { background: color-mix(in oklch, var(--preview-ink) 8%, var(--preview-bg)); }
+}
+
 /* Highlighted target word inside corpus sentences and passages. */
 @utility word-mark {
   font-weight: 650;
@@ -449,9 +632,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *:not(.animate-spin),
-  *:not(.animate-spin)::before,
-  *:not(.animate-spin)::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;

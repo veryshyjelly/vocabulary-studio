@@ -1,9 +1,9 @@
-import React from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { App } from "./App";
 import {
+  getBridge,
   setBridgeForTesting,
   SessionStoreMode,
   type AccountStatusDTO,
@@ -262,11 +262,11 @@ describe("Vocabulary Studio Desktop Frontend", () => {
     // 1st attempt: press key "1" (wrong choice index 0) -> Server-recorded feedback
     await user.keyboard("1");
     expect(await screen.findByText(/Attempt 1: Keep trying!/i)).toBeInTheDocument();
-    expect(screen.getByText(/Recorded to Vocabulary.com/i)).toBeInTheDocument();
+    expect(screen.getByText(/Answer saved to your session/i)).toBeInTheDocument();
 
     // 2nd attempt: press key "2" (correct choice index 1) -> Locally evaluated retry
     await user.keyboard("2");
-    expect(await screen.findByText(/Evaluated locally \(retry attempt\)/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Practice retry · keep going/i)).toBeInTheDocument();
 
     // Press Enter to advance to next question (which is a Spelling question)
     await user.keyboard("{Enter}");
@@ -274,6 +274,8 @@ describe("Vocabulary Studio Desktop Frontend", () => {
     await user.type(spellInput, "callow{Enter}");
 
     expect(await screen.findByText(/Correct on first try!/i)).toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    await waitFor(() => expect(screen.getByLabelText(/Word spelling input/i)).toBeEnabled());
   });
 
   it("supports Dictionary lookup, Word Family navigation, and Lists Flashcards", async () => {
@@ -407,4 +409,110 @@ describe("Vocabulary Studio Desktop Frontend", () => {
     await user.click(await screen.findByRole("button", { name: /Dark Slate/i }));
     expect(updatePrefsMock).toHaveBeenCalled();
   });
+  it("keeps sign-in focus stable while editing and restores the opener on Escape", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    const opener = (await screen.findAllByRole("button", { name: /^Sign In$/i }))[0];
+    await user.click(opener);
+    const dialog = screen.getByRole("dialog");
+    const password = within(dialog).getByLabelText(/^Password$/i);
+    await user.type(password, "a secret with spaces");
+    expect(password).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(opener).toHaveFocus();
+    await user.click(opener);
+    expect(within(screen.getByRole("dialog")).getByLabelText(/^Password$/i)).toHaveValue("");
+  });
+
+  it("shows the pending choice without claiming success before the SDK responds", async () => {
+    const user = userEvent.setup();
+    let resolveAnswer!: (value: any) => void;
+    const answer = new Promise<any>((resolve) => { resolveAnswer = resolve; });
+    vi.mocked(getBridge().trainer.SubmitChoice).mockReturnValueOnce(answer as any);
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /^Practice$/i }));
+    const choice = await screen.findByRole("button", { name: /young and inexperienced/i });
+    await user.click(choice);
+    expect(choice).toHaveAttribute("aria-pressed", "true");
+    expect(choice).toBeDisabled();
+    expect(screen.getByTestId("pacing-indicator")).toHaveTextContent("Submitting answer");
+    expect(screen.queryByRole("region", { name: "Answer feedback" })).not.toBeInTheDocument();
+    await act(async () => resolveAnswer({
+      ...createMockQuestionSlide(false),
+      session_state: TrainerSessionState.SessionStateQuestionCompleted,
+      last_feedback: { correct: true, attempt: 1, points_earned: 100, word: "callow" },
+    }));
+    expect(await screen.findByText(/Correct on first try!/i)).toBeInTheDocument();
+  });
+
+  it("uses arrow keys to switch tool tabs and leaves the selected tab in the tab order", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /^Discover$/i }));
+    const collections = screen.getByRole("tab", { name: /Curated Collections/i });
+    await user.click(collections);
+    await user.keyboard("{End}");
+    const finder = screen.getByRole("tab", { name: "WordFinder" });
+    expect(finder).toHaveFocus();
+    expect(finder).toHaveAttribute("aria-selected", "true");
+    expect(collections).toHaveAttribute("tabindex", "-1");
+    expect(screen.getByLabelText("Match Rule")).toBeInTheDocument();
+  });
+
+  it("flips a focused flashcard once and does not intercept typing in search", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /^My Lists$/i }));
+    await user.click(await screen.findByRole("button", { name: /Inspect Words/i }));
+    await user.click(await screen.findByRole("button", { name: /Flashcards/i }));
+    const card = screen.getByRole("button", { name: "Flip flashcard for callow" });
+    card.focus();
+    await user.keyboard(" ");
+    expect(card).toHaveAttribute("aria-pressed", "true");
+    await user.keyboard(" ");
+    expect(card).toHaveAttribute("aria-pressed", "false");
+    await user.type(screen.getByLabelText("Quick word lookup"), "a word");
+    expect(card).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("filters personal lists and offers recovery when a filter has no matches", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getBridge().auth.RestoreSession).mockResolvedValue(createMockAccount(true) as any);
+    setBridgeForTesting({ lists: { ...getBridge().lists, GetUserLists: vi.fn().mockResolvedValue([
+      { wordlistid: 1, name: "Biology words", wordcount: 12 },
+      { wordlistid: 2, name: "Literature words", wordcount: 8 },
+    ]) } as any });
+    render(<App />);
+    await screen.findByText("Ayush");
+    await user.click(screen.getByRole("button", { name: /^My Lists$/i }));
+    const filter = await screen.findByLabelText("Filter personal lists");
+    await screen.findByText("Biology words");
+    await user.type(filter, "biology");
+    expect(screen.queryByText("Literature words")).not.toBeInTheDocument();
+    await user.type(filter, "unmatched");
+    expect(screen.getByText("No lists match your search")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filter" }));
+    expect(screen.getByText("Literature words")).toBeInTheDocument();
+  });
+
+  it("keeps the latest example-source result when requests finish out of order", async () => {
+    const user = userEvent.setup();
+    let resolveLiterature!: (value: any) => void;
+    let resolveNews!: (value: any) => void;
+    const literature = new Promise<any>((resolve) => { resolveLiterature = resolve; });
+    const news = new Promise<any>((resolve) => { resolveNews = resolve; });
+    vi.mocked(getBridge().dictionary.GetExamples).mockReturnValueOnce(literature as any).mockReturnValueOnce(news as any);
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /^Dictionary$/i }));
+    await screen.findByRole("heading", { name: "callow" });
+    await user.click(screen.getByRole("button", { name: "Literature" }));
+    await user.click(screen.getByRole("button", { name: "News" }));
+    await act(async () => resolveNews([{ sentence: "The latest news example.", source_name: "News" }]));
+    expect(await screen.findByText("The latest news example.")).toBeInTheDocument();
+    await act(async () => resolveLiterature([{ sentence: "The outdated literature example.", source_name: "Book" }]));
+    expect(screen.queryByText("The outdated literature example.")).not.toBeInTheDocument();
+    expect(screen.getByText("The latest news example.")).toBeInTheDocument();
+  });
+
 });

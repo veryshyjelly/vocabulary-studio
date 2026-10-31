@@ -29,8 +29,10 @@ import {
   Button,
   Card,
   Chip,
+  Dialog,
   EmptyState,
   Kbd,
+  LoadingBlock,
   Meter,
   SectionTitle,
   Skeleton,
@@ -85,11 +87,14 @@ export const DictionaryView: React.FC<{
   // Add to list popover state
   const [showAddToList, setShowAddToList] = useState(false);
   const [userLists, setUserLists] = useState<ProfileListSummary[]>([]);
-  const addToListRef = useRef<HTMLDivElement | null>(null);
+  const [listsLoading, setListsLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [addingToList, setAddingToList] = useState<number | null>(null);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const latestLookupId = useRef(0);
   const latestAutocompleteId = useRef(0);
+  const latestExamplesId = useRef(0);
 
   const refreshHistory = useCallback(async () => {
     try {
@@ -106,6 +111,8 @@ export const DictionaryView: React.FC<{
       if (!trimmed) return;
 
       const reqId = ++latestLookupId.current;
+      ++latestExamplesId.current;
+      setExamplesLoading(false);
       setShowSuggestions(false);
       setQuery(trimmed);
       setLoading(true);
@@ -163,23 +170,6 @@ export const DictionaryView: React.FC<{
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Close the add-to-list popover on outside click or Escape
-  useEffect(() => {
-    if (!showAddToList) return;
-    const onPointer = (e: MouseEvent) => {
-      if (addToListRef.current && !addToListRef.current.contains(e.target as Node)) setShowAddToList(false);
-    };
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setShowAddToList(false);
-    };
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [showAddToList]);
-
   // Debounced autocomplete with stale-response suppression
   useEffect(() => {
     const trimmed = query.trim();
@@ -202,20 +192,24 @@ export const DictionaryView: React.FC<{
       }
     }, 200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      ++latestAutocompleteId.current;
+    };
   }, [query, showSuggestions]);
 
   const handleDomainChange = async (domain: string) => {
     if (!detail?.entry?.word) return;
     setSelectedDomain(domain);
     setExamplesLoading(true);
+    const reqId = ++latestExamplesId.current;
     try {
       const list = await getBridge().dictionary.GetExamples(detail.entry.word, domain, 0, 10);
-      setExamples(list || []);
+      if (reqId === latestExamplesId.current) setExamples(list || []);
     } catch (err) {
-      setError(formatError(err));
+      if (reqId === latestExamplesId.current) setError(formatError(err));
     } finally {
-      setExamplesLoading(false);
+      if (reqId === latestExamplesId.current) setExamplesLoading(false);
     }
   };
 
@@ -272,30 +266,42 @@ export const DictionaryView: React.FC<{
       return;
     }
     setShowAddToList((v) => !v);
+    setListError(null);
     if (userLists.length === 0) {
+      setListsLoading(true);
       try {
         const lists = await getBridge().lists.GetUserLists("created");
         setUserLists(lists || []);
       } catch (err) {
-        setError(formatError(err));
+        setListError(formatError(err));
+      } finally {
+        setListsLoading(false);
       }
     }
   };
 
   const handleAddWordToList = async (listId: number, listName: string) => {
-    if (!detail?.entry?.word) return;
+    if (!detail?.entry?.word || addingToList !== null) return;
+    setAddingToList(listId);
+    setListError(null);
     try {
       await getBridge().lists.AddWordsToList(listId, [{ word: detail.entry.word, lang: "en" }]);
       setShowAddToList(false);
       toast(`Added "${detail.entry.word}" to "${listName}".`);
     } catch (err) {
-      setError(formatError(err));
+      setListError(formatError(err));
+    } finally {
+      setAddingToList(null);
     }
   };
 
   const handleClearHistory = async () => {
-    await getBridge().dictionary.ClearSearchHistory();
-    setHistory([]);
+    try {
+      await getBridge().dictionary.ClearSearchHistory();
+      setHistory([]);
+    } catch (err) {
+      setError(formatError(err));
+    }
   };
 
   const entry = detail?.entry;
@@ -316,7 +322,7 @@ export const DictionaryView: React.FC<{
     <div className="space-y-6">
       {/* Search */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <form
             role="search"
             onSubmit={(e) => {
@@ -327,7 +333,7 @@ export const DictionaryView: React.FC<{
                 lookupWord(query);
               }
             }}
-            className="relative flex-1"
+            className="relative flex-1 min-w-60"
           >
             <Search
               className="w-4.5 h-4.5 text-ink-subtle absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -341,18 +347,19 @@ export const DictionaryView: React.FC<{
               aria-expanded={listboxOpen}
               aria-controls="dictionary-suggestions"
               aria-autocomplete="list"
-              aria-activedescendant={activeSuggestionIdx >= 0 ? `dict-sug-${activeSuggestionIdx}` : undefined}
+              aria-activedescendant={listboxOpen && activeSuggestionIdx >= 0 ? `dict-sug-${activeSuggestionIdx}` : undefined}
               onFocus={() => setShowSuggestions(true)}
-              onBlur={() => window.setTimeout(() => setShowSuggestions(false), 120)}
+              onBlur={() => setShowSuggestions(false)}
               onChange={(e) => {
                 setQuery(e.target.value);
                 setShowSuggestions(true);
               }}
               onKeyDown={(e) => {
-                if (e.key === "ArrowDown" && suggestions.length > 0) {
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === "ArrowDown" && listboxOpen) {
                   e.preventDefault();
                   setActiveSuggestionIdx((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
-                } else if (e.key === "ArrowUp" && suggestions.length > 0) {
+                } else if (e.key === "ArrowUp" && listboxOpen) {
                   e.preventDefault();
                   setActiveSuggestionIdx((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
                 } else if (e.key === "Escape") {
@@ -396,7 +403,7 @@ export const DictionaryView: React.FC<{
                     <div className="min-w-0">
                       <div className="flex items-baseline gap-2">
                         <span className="font-word font-semibold text-ink">{sug.word}</span>
-                        {sug.ipa && <span className="font-data text-micro text-ink-subtle">{sug.ipa}</span>}
+                        {sug.ipa && <span className="font-ipa text-meta text-ink-subtle">{sug.ipa}</span>}
                       </div>
                       {sug.definition && (
                         <p className="font-read text-[0.9375rem] text-ink-muted truncate">{sug.definition}</p>
@@ -441,6 +448,7 @@ export const DictionaryView: React.FC<{
       </div>
 
       {error && <ErrorBanner message={error} onRetry={() => lookupWord(query)} />}
+      <p className="sr-only" role="status">{loading ? `Looking up ${query}…` : entry ? `Dictionary entry for ${entry.word}` : ""}</p>
 
       {loading && !entry && (
         <Card pad="lg" className="space-y-4" aria-busy>
@@ -461,11 +469,11 @@ export const DictionaryView: React.FC<{
       {entry && (
         <div key={entry.word} className={cx("space-y-6 animate-enter", loading && "opacity-60 transition-opacity")}>
           {/* Hero */}
-          <Card pad="lg" className="space-y-6">
-            <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+          <section className="dictionary-hero space-y-6" aria-label="Word overview">
+            <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-5">
               <div className="space-y-3 min-w-0">
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                  <h1 className="font-word text-[2.5rem] md:text-[3rem] leading-[1.05] font-semibold tracking-[-0.03em] text-ink break-words">
+                  <h1 className="word-display text-ink">
                     {entry.word}
                   </h1>
                   <div className="flex items-center gap-1.5">
@@ -492,9 +500,9 @@ export const DictionaryView: React.FC<{
                         className="inline-flex items-center gap-2 h-8 pl-2.5 pr-0.5 rounded-control border border-line bg-sunken"
                       >
                         <span className="eyebrow text-ink-subtle">{p.region}</span>
-                        {p.ipa && <span className="font-data text-meta text-ink">{p.ipa}</span>}
+                        {p.ipa && <span className="font-ipa text-ui text-ink">{p.ipa}</span>}
                         {(p.audio_url || entry.word) && (
-                          <AudioButton audioUrl={p.audio_url} word={entry.word} size="sm" variant="ghost" />
+                          <AudioButton audioUrl={p.audio_url} word={entry.word} ariaLabel={`Play ${p.region} pronunciation for ${entry.word}`} size="sm" variant="ghost" />
                         )}
                       </div>
                     ))
@@ -504,7 +512,7 @@ export const DictionaryView: React.FC<{
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 relative shrink-0" ref={addToListRef}>
+              <div className="flex flex-wrap items-center gap-2">
                 {entry.learnable && (
                   <Button variant="primary" icon={Sparkles} onClick={handleStartLearning}>
                     Learn Word
@@ -520,19 +528,18 @@ export const DictionaryView: React.FC<{
                 </Button>
                 <CopyButton text={`${entry.word}: ${entry.short_blurb || entry.senses?.[0]?.definition || ""}`} label="Copy" />
 
-                {showAddToList && (
-                  <div
-                    role="dialog"
-                    aria-label={`Add "${entry.word}" to a list`}
-                    className="animate-dialog absolute right-0 top-11 z-20 w-72 rounded-[0.8rem] border border-line bg-raised shadow-pop p-2"
-                  >
-                    <p className="px-2 pt-1 pb-2 eyebrow text-ink-subtle">Add "{entry.word}" to list</p>
-                    {userLists.length > 0 ? (
+                <Dialog open={showAddToList} onClose={() => setShowAddToList(false)} labelledBy="add-word-title">
+                  <div className="p-5 space-y-4">
+                    <h2 id="add-word-title" className="font-nav text-ui font-semibold">Add “{entry.word}” to a list</h2>
+                    {listError && <ErrorBanner message={listError} />}
+                    {listsLoading ? <LoadingBlock label="Loading your lists…" /> : userLists.length > 0 ? (
                       <ul className="max-h-56 overflow-y-auto">
                         {userLists.map((ul) => (
                           <li key={ul.wordlistid}>
                             <button
                               type="button"
+                              disabled={addingToList !== null}
+                              aria-busy={addingToList === ul.wordlistid}
                               onClick={() => handleAddWordToList(ul.wordlistid, ul.name)}
                               className="w-full flex items-center justify-between gap-2 px-2 py-2 rounded-[0.5rem] text-left hover:bg-sunken transition-colors"
                             >
@@ -550,8 +557,9 @@ export const DictionaryView: React.FC<{
                         No personal lists found. Create one in My Lists first.
                       </p>
                     )}
+                    <Button className="w-full" onClick={() => setShowAddToList(false)}>Cancel</Button>
                   </div>
-                )}
+                </Dialog>
               </div>
             </div>
 
@@ -587,12 +595,19 @@ export const DictionaryView: React.FC<{
             )}
 
             {(entry.short_blurb || entry.long_blurb) && (
-              <div className="space-y-3 max-w-[70ch] pt-1 border-t border-line">
-                {entry.short_blurb && <p className="pt-5 font-read text-read-lg text-ink">{entry.short_blurb}</p>}
-                {entry.long_blurb && <p className="font-read text-read text-ink-muted">{entry.long_blurb}</p>}
+              <div className="reading-copy space-y-4">
+                {entry.short_blurb && <p className="font-read text-read-lg text-ink">{entry.short_blurb}</p>}
+                {entry.long_blurb && (
+                  <details className="group">
+                    <summary className="font-nav text-meta text-accent-ink cursor-pointer py-1 w-fit rounded-control">
+                      Word story & usage
+                    </summary>
+                    <p className="text-ink-muted pt-3">{entry.long_blurb}</p>
+                  </details>
+                )}
               </div>
             )}
-          </Card>
+          </section>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Definitions */}
@@ -600,14 +615,14 @@ export const DictionaryView: React.FC<{
               <SectionTitle icon={BookText}>Definitions & Senses ({senses.length})</SectionTitle>
               {senses.length > 0 ? (
                 <Card pad="none">
-                  <ol className="divide-y divide-line">
+                  <ol id="dictionary-senses" className="divide-y divide-line">
                     {visibleSenses.map((sense, idx) => (
                       <li key={sense.synset_id || idx} className="flex gap-4 px-5 py-4">
                         <span className="font-data text-meta text-ink-subtle w-5 shrink-0 pt-1 tabular-nums">
                           {idx + 1}
                         </span>
                         <div className="min-w-0 flex-1 space-y-2.5">
-                          <div className="flex flex-wrap items-baseline gap-2">
+                          <div className="space-y-2">
                             <Badge tone="accent">{sense.part_of_speech || sense.pos_code || "sense"}</Badge>
                             <p className="font-read text-[1.0625rem] leading-snug text-ink">{sense.definition}</p>
                           </div>
@@ -652,6 +667,7 @@ export const DictionaryView: React.FC<{
                       type="button"
                       onClick={() => setShowAllSenses((v) => !v)}
                       aria-expanded={showAllSenses}
+                      aria-controls="dictionary-senses"
                       className="w-full flex items-center justify-center gap-1.5 h-10 border-t border-line font-nav text-meta text-ink-muted hover:text-ink hover:bg-sunken/60 transition-colors rounded-b-card"
                     >
                       <ChevronDown

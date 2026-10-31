@@ -69,10 +69,11 @@ export const AudioButton: React.FC<{
   audioUrl?: string;
   word?: string;
   label?: string;
+  ariaLabel?: string;
   size?: "sm" | "md";
   variant?: "secondary" | "ghost" | "soft";
   className?: string;
-}> = ({ audioUrl, word, label, size = "md", variant = "secondary", className = "" }) => {
+}> = ({ audioUrl, word, label, ariaLabel, size = "md", variant = "secondary", className = "" }) => {
   const [playing, setPlaying] = useState(false);
   const [failed, setFailed] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -123,7 +124,8 @@ export const AudioButton: React.FC<{
       type="button"
       onClick={handlePlay}
       title={failed ? "Audio unavailable" : accessible}
-      aria-label={label ? `${label}${word ? ` (${word})` : ""}` : accessible}
+      aria-label={`${ariaLabel || (label ? `${label}${word ? ` (${word})` : ""}` : accessible)}${failed ? "; audio unavailable, try again" : ""}`}
+      aria-busy={playing || undefined}
       className={cx(
         "inline-flex items-center justify-center gap-1.5 shrink-0 rounded-control font-nav font-medium",
         "transition-[background-color,border-color,color,transform] duration-150 ease-out-soft active:translate-y-px",
@@ -211,8 +213,8 @@ export const ErrorBanner: React.FC<{
 
 const STORE_OPTIONS = [
   { id: "keyring", label: "OS Keyring", icon: ShieldCheck, desc: "System keychain" },
-  { id: "file", label: "Secure File", icon: HardDrive, desc: "0600 JSON file" },
-  { id: "memory", label: "Memory Only", icon: Cpu, desc: "Until app quits" },
+  { id: "file", label: "Secure File", icon: HardDrive, desc: "Private local file" },
+  { id: "memory", label: "Memory Only", icon: Cpu, desc: "This session only" },
 ];
 
 /**
@@ -360,8 +362,7 @@ export const AuthModal: React.FC<{
         </fieldset>
 
         <p className="text-meta text-ink-subtle leading-relaxed">
-          Credentials and session tokens are handled exclusively by the native Go SDK and are never exposed to browser
-          storage.
+          Your sign-in is protected on this device. Passwords and session tokens are never saved in browser storage.
         </p>
 
         <div className="flex items-center justify-between gap-2 pt-1">

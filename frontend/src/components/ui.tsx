@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { LucideIcon } from "lucide-react";
 import { AlertCircle, CheckCircle2, ChevronDown, Info, Loader2, X } from "lucide-react";
 
@@ -25,7 +26,7 @@ const buttonVariants: Record<ButtonVariant, string> = {
     "bg-surface text-ink border border-line hover:border-line-strong hover:bg-sunken shadow-card",
   ghost: "text-ink-muted hover:text-ink hover:bg-sunken",
   soft: "bg-accent-soft text-accent-ink hover:bg-accent-soft-hover",
-  danger: "bg-danger text-white hover:bg-danger-hover",
+  danger: "bg-danger text-on-danger hover:bg-danger-hover",
   "danger-outline": "text-danger-ink border border-danger-line hover:bg-danger-soft",
   plain: "",
 };
@@ -97,13 +98,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function 
 export const IconButton = React.forwardRef<
   HTMLButtonElement,
   Omit<ButtonProps, "children" | "iconRight" | "kbd"> & { icon: LucideIcon; label: string }
->(function IconButton({ icon: Icon, label, size = "md", variant = "ghost", className, loading, ...rest }, ref) {
+>(function IconButton({ icon: Icon, label, size = "md", variant = "ghost", className, loading, disabled, ...rest }, ref) {
   const dims = size === "sm" ? "h-7 w-7" : size === "lg" ? "h-10 w-10" : size === "xl" ? "h-12 w-12" : "h-8.5 w-8.5";
   return (
     <button
       ref={ref}
       type="button"
       aria-label={label}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       title={label}
       className={cx(buttonBase, buttonVariants[variant], dims, "px-0", className)}
       {...rest}
@@ -193,10 +196,10 @@ export const PageHeader: React.FC<{
     <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
       <div className="min-w-0 space-y-1.5">
         {eyebrow && <p className="eyebrow text-accent-ink">{eyebrow}</p>}
-        <h1 className="font-nav text-[1.5rem] leading-tight font-semibold tracking-[-0.02em] text-ink">
+        <h1 className="font-word text-title font-semibold tracking-[-0.03em] text-ink break-words">
           {title}
         </h1>
-        {description && <p className="text-meta text-ink-muted max-w-[68ch]">{description}</p>}
+        {description && <p className="text-ui leading-relaxed text-ink-muted max-w-[68ch]">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -509,7 +512,7 @@ export const EmptyState: React.FC<{
 }> = ({ icon: Icon, title, description, action, className }) => (
   <div
     className={cx(
-      "flex flex-col items-center text-center gap-3 px-6 py-12 rounded-card border border-dashed border-line-strong bg-surface/50",
+      "flex flex-col items-center text-center gap-4 px-6 py-12 rounded-card bg-sunken/60",
       className
     )}
   >
@@ -520,7 +523,7 @@ export const EmptyState: React.FC<{
     )}
     <div className="space-y-1 max-w-md">
       <h3 className="font-nav text-ui font-semibold text-ink">{title}</h3>
-      {description && <p className="text-meta text-ink-muted">{description}</p>}
+      {description && <p className="font-read text-read text-ink-muted leading-relaxed">{description}</p>}
     </div>
     {action}
   </div>
@@ -532,7 +535,7 @@ export const StatTile: React.FC<{
   icon?: LucideIcon;
   hint?: string;
 }> = ({ label, value, icon: Icon, hint }) => (
-  <div className="rounded-[0.7rem] border border-line bg-sunken/70 px-3.5 py-3 space-y-1.5" title={hint}>
+  <div className="border-l-2 border-line pl-3 py-1 space-y-2 min-w-0" title={hint}>
     <div className="flex items-center gap-1.5 eyebrow text-ink-subtle">
       {Icon && <Icon className="w-3.5 h-3.5" aria-hidden />}
       <span>{label}</span>
@@ -633,6 +636,8 @@ export const Dialog: React.FC<{
   const panelRef = useRef<HTMLDivElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   // Captured during render: child autoFocus moves focus before any effect runs.
   if (open && !wasOpen.current && typeof document !== "undefined") {
     openerRef.current = document.activeElement as HTMLElement | null;
@@ -643,26 +648,33 @@ export const Dialog: React.FC<{
     if (!open) return;
     const panel = panelRef.current;
     const previouslyFocused = openerRef.current;
+    const appRoot = document.getElementById("root");
+    const wasInert = appRoot?.inert ?? false;
+    if (appRoot) appRoot.inert = true;
     if (panel && !panel.contains(document.activeElement)) {
-      (panel.querySelector<HTMLElement>("[data-autofocus]") || panel.querySelector<HTMLElement>(FOCUSABLE))?.focus();
+      (panel.querySelector<HTMLElement>("[data-autofocus]") || panel.querySelector<HTMLElement>(FOCUSABLE) || panel)?.focus();
     }
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
-        onClose();
+        closeRef.current();
         return;
       }
       if (e.key !== "Tab" || !panel) return;
       const nodes = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (nodes.length === 0) return;
+      if (nodes.length === 0) {
+        e.preventDefault();
+        panel.focus();
+        return;
+      }
       const first = nodes[0];
       const last = nodes[nodes.length - 1];
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
+      } else if (!panel.contains(document.activeElement) || (!e.shiftKey && document.activeElement === last)) {
         e.preventDefault();
         first.focus();
       }
@@ -670,13 +682,14 @@ export const Dialog: React.FC<{
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
-      previouslyFocused?.focus?.();
+      if (appRoot) appRoot.inert = wasInert;
+      if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-overlay backdrop-blur-[2px] animate-fade" onClick={onClose} aria-hidden />
       <div
@@ -684,13 +697,15 @@ export const Dialog: React.FC<{
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        tabIndex={-1}
         className={cx(
-          "relative w-full max-w-md rounded-[1rem] border border-line bg-raised shadow-pop animate-dialog overflow-hidden",
+          "relative w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[1rem] border border-line bg-raised shadow-pop animate-dialog",
           className
         )}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

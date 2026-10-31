@@ -54,6 +54,7 @@ export const PracticeView: React.FC<{
   const [spellingInput, setSpellingInput] = useState("");
   const [activeHints, setActiveHints] = useState<HintResultDTO[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingChoice, setPendingChoice] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -117,6 +118,7 @@ export const PracticeView: React.FC<{
       if (!choice || choice.eliminated) return;
 
       setSubmitting(true);
+      setPendingChoice(index);
       setError(null);
       try {
         const updated = await getBridge().trainer.SubmitChoice(index);
@@ -131,6 +133,7 @@ export const PracticeView: React.FC<{
       } catch (err) {
         setError(formatError(err));
       } finally {
+        setPendingChoice(null);
         setSubmitting(false);
       }
     },
@@ -201,10 +204,12 @@ export const PracticeView: React.FC<{
     if (mode !== "trainer" || !sessionState?.question) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey || isModalOpen()) return;
+      if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || isModalOpen()) return;
       const isCompleted = sessionState.session_state === "question_completed";
+      const canAdvance = acceptsPlainShortcut(e) ||
+        (e.target instanceof HTMLInputElement && e.target.disabled && !e.defaultPrevented && !e.repeat);
 
-      if (e.key === "Enter" && isCompleted && !submitting && !loading) {
+      if (e.key === "Enter" && isCompleted && canAdvance && !submitting && !loading) {
         e.preventDefault();
         handleNextQuestion();
         return;
@@ -358,6 +363,7 @@ export const PracticeView: React.FC<{
 
   return (
     <div className="max-w-[860px] mx-auto space-y-5">
+      <h1 className="font-word text-title font-semibold tracking-[-0.03em]">Practice</h1>
       {/* Mode switcher & session source */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs
@@ -417,7 +423,7 @@ export const PracticeView: React.FC<{
         <div className="space-y-4">
           {/* Session status strip */}
           {sessionState?.active && (
-            <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 px-4 py-2.5 rounded-[0.75rem] border border-line bg-surface shadow-card">
+            <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 px-1 py-3 border-b border-line">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
                 {sessionState.round && (
                   <div className="flex items-center gap-3">
@@ -450,7 +456,7 @@ export const PracticeView: React.FC<{
                     className="inline-flex items-center gap-1.5 font-nav text-meta text-accent-ink"
                   >
                     <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-                    <span>Verifying answer...</span>
+                    <span>Submitting answer…</span>
                   </span>
                 )}
                 {q?.mode && <Badge className="uppercase tracking-wider">{q.mode}</Badge>}
@@ -498,19 +504,14 @@ export const PracticeView: React.FC<{
             <Card
               pad="none"
               key={`${q.turn}-${q.type}`}
-              className="animate-enter overflow-hidden"
+              className="study-sheet animate-enter overflow-hidden"
               aria-labelledby="practice-question-heading"
+              aria-busy={submitting || loading}
             >
-              <div className="p-6 md:p-8 space-y-6">
+              <div className="study-content space-y-5">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-2.5 min-w-0">
                     {q.type_label && <p className="eyebrow text-accent-ink">{q.type_label}</p>}
-                    {q.is_image_grid && q.target_word && (
-                      <p className="font-nav text-meta text-ink-muted">
-                        Select the image that best represents{" "}
-                        <strong className="font-word text-[1.05rem] font-semibold text-ink">{q.target_word}</strong>
-                      </p>
-                    )}
                   </div>
                   {(q.audio_url || q.target_word) && (
                     <AudioButton audioUrl={q.audio_url} word={q.target_word} label="Audio" size="sm" />
@@ -542,7 +543,7 @@ export const PracticeView: React.FC<{
 
                 <h2
                   id="practice-question-heading"
-                  className="font-read text-[1.375rem] md:text-[1.5rem] leading-snug text-ink"
+                  className="question-prompt text-ink"
                 >
                   <RichText
                     spans={q.instructions_spans}
@@ -601,7 +602,7 @@ export const PracticeView: React.FC<{
                       autoCapitalize="off"
                       spellCheck={false}
                       className={cx(
-                        "flex-1 h-12 px-4 rounded-[0.75rem] border bg-sunken font-word text-[1.375rem] tracking-[0.04em] text-ink placeholder:text-ink-subtle placeholder:tracking-normal placeholder:text-[1rem]",
+                        "flex-1 min-w-0 h-14 px-4 rounded-control border bg-sunken font-ui text-[1.375rem] tracking-[0.02em] text-ink placeholder:text-ink-subtle placeholder:tracking-normal placeholder:text-[1rem]",
                         "outline-none transition-[border-color,box-shadow] focus:border-accent focus:ring-3 focus:ring-focus/20",
                         feedback && !feedback.correct && !isCompleted ? "border-danger-line animate-shake" : "border-line"
                       )}
@@ -617,7 +618,7 @@ export const PracticeView: React.FC<{
                     </Button>
                   </form>
                 ) : q.is_image_grid ? (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 max-w-[640px] mx-auto" role="group" aria-label="Image answer choices">
                     {(q.choices || []).map((ch, idx) => {
                       const status = selectedChoices[idx];
                       const disabled = isCompleted || submitting || Boolean(ch.eliminated) || Boolean(status);
@@ -626,10 +627,11 @@ export const PracticeView: React.FC<{
                           key={ch.nonce || idx}
                           type="button"
                           disabled={disabled}
+                          aria-pressed={pendingChoice === idx || Boolean(status)}
                           onClick={() => handleChoiceSelect(idx)}
                           aria-label={`Choice ${idx + 1}${ch.eliminated ? " (eliminated)" : ""}${status ? ` (${status})` : ""}`}
                           className={cx(
-                            "group relative aspect-4/3 rounded-[0.85rem] border-2 overflow-hidden bg-sunken",
+                            "group relative aspect-[16/10] max-h-44 rounded-control border-2 overflow-hidden bg-sunken",
                             "transition-[border-color,opacity,transform,box-shadow] duration-200 ease-out-soft",
                             status === "correct"
                               ? "border-success ring-4 ring-success/20 animate-pop"
@@ -643,7 +645,7 @@ export const PracticeView: React.FC<{
                           )}
                         >
                           {ch.image_url ? (
-                            <img src={ch.image_url} alt="" className="w-full h-full object-cover" />
+                            <img src={ch.image_url} alt="" className="w-full h-full object-contain" />
                           ) : (
                             <div className="flex items-center justify-center h-full text-ui text-ink-muted">
                               {ch.text || `Image ${idx + 1}`}
@@ -653,12 +655,12 @@ export const PracticeView: React.FC<{
                             {idx + 1}
                           </Kbd>
                           {status === "correct" && (
-                            <span className="absolute top-2.5 right-2.5 bg-success text-white rounded-full p-1 shadow-raised">
+                            <span className="absolute top-2.5 right-2.5 bg-success text-on-success rounded-full p-1 shadow-raised">
                               <CheckCircle2 className="w-4 h-4" aria-hidden />
                             </span>
                           )}
                           {status === "wrong" && (
-                            <span className="absolute top-2.5 right-2.5 bg-danger text-white rounded-full p-1 shadow-raised">
+                            <span className="absolute top-2.5 right-2.5 bg-danger text-on-danger rounded-full p-1 shadow-raised">
                               <XCircle className="w-4 h-4" aria-hidden />
                             </span>
                           )}
@@ -676,9 +678,10 @@ export const PracticeView: React.FC<{
                           key={ch.nonce || idx}
                           type="button"
                           disabled={disabled}
+                          aria-pressed={pendingChoice === idx || Boolean(status)}
                           onClick={() => handleChoiceSelect(idx)}
                           className={cx(
-                            "group w-full flex items-center gap-3.5 px-4 py-3.5 rounded-[0.8rem] border text-left",
+                            "answer-choice group w-full flex flex-wrap gap-x-3.5 gap-y-2 px-4 py-3 rounded-control border text-left",
                             "transition-[background-color,border-color,opacity,transform,box-shadow] duration-200 ease-out-soft",
                             status === "correct"
                               ? "border-success-line bg-success-soft text-ink animate-pop"
@@ -688,7 +691,9 @@ export const PracticeView: React.FC<{
                               ? "border-dashed border-line opacity-40 cursor-not-allowed"
                               : isCompleted
                               ? "border-line bg-surface opacity-55"
-                              : "border-line bg-surface hover:border-accent-line hover:bg-accent-soft/35 hover:-translate-y-px hover:shadow-raised active:translate-y-0"
+                              : pendingChoice === idx
+                              ? "border-accent-line bg-accent-soft text-ink"
+                              : "border-line bg-surface hover:border-accent-line hover:bg-accent-soft/35"
                           )}
                         >
                           <Kbd
@@ -699,12 +704,13 @@ export const PracticeView: React.FC<{
                           </Kbd>
                           <span
                             className={cx(
-                              "flex-1 font-read text-[1.0625rem] leading-snug",
+                              "flex-1 min-w-0 font-read text-[1.125rem] leading-snug break-words",
                               (status === "wrong" || ch.eliminated) && "line-through decoration-1"
                             )}
                           >
                             {ch.text}
                           </span>
+                          {pendingChoice === idx && <Loader2 className="w-4 h-4 animate-spin text-accent-ink" aria-hidden />}
                           {status === "correct" && (
                             <span className="inline-flex items-center gap-1 font-nav text-meta font-semibold text-success-ink shrink-0">
                               <CheckCircle2 className="w-4 h-4" aria-hidden />
@@ -795,7 +801,7 @@ export const PracticeView: React.FC<{
                   <span
                     className={cx(
                       "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
-                      feedback.correct ? "bg-success text-white" : "bg-warning text-white"
+                      feedback.correct ? "bg-success text-on-success" : "bg-warning text-on-warning"
                     )}
                   >
                     {feedback.correct ? (
@@ -813,7 +819,7 @@ export const PracticeView: React.FC<{
                         : `Attempt ${feedback.attempt}: Keep trying!`}
                     </h3>
                     <p className="font-nav text-micro text-ink-muted">
-                      {feedback.evaluated_locally ? "Evaluated locally (retry attempt)" : "Recorded to Vocabulary.com"}
+                      {feedback.evaluated_locally ? "Practice retry · keep going" : "Answer saved to your session"}
                     </p>
                   </div>
                 </div>
@@ -1073,6 +1079,7 @@ export const PracticeView: React.FC<{
                       <input
                         type="radio"
                         name="quiz-choice"
+                        disabled={submitting}
                         checked={selected}
                         onChange={() => setQuizSelectedNonce(ch.nonce)}
                         className="w-4 h-4 accent-[var(--c-accent)]"

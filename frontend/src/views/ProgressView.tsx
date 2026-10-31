@@ -4,7 +4,6 @@ import {
   Award,
   Trophy,
   Activity,
-  Loader2,
   LogIn,
   ArrowRight,
 } from "lucide-react";
@@ -16,6 +15,7 @@ import type {
   LeaderboardResponse,
 } from "../lib/bridge";
 import { getBridge, formatError } from "../lib/bridge";
+import { Button, EmptyState, LoadingBlock, Meter, PageHeader, Tabs } from "../components/ui";
 import { ErrorBanner } from "../components/Shared";
 
 type ProgressTab = "words" | "activities" | "achievements" | "leaderboards";
@@ -126,62 +126,35 @@ export const ProgressView: React.FC<{
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 pb-12">
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-stone-200/80 dark:border-stone-800/80">
-        <div>
-          <h1 className="text-2xl font-editorial font-semibold text-stone-900 dark:text-stone-100">
-            Learning Progress & Mastery
-          </h1>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            Review words in progress, trouble words, activity logs, earned milestones, and global leaderboards.
-          </p>
-        </div>
-
-        <div className="inline-flex p-1 rounded-lg bg-stone-200/70 dark:bg-stone-900 border border-stone-200 dark:border-stone-800">
-          {[
-            { id: "words" as const, label: "My Words", icon: TrendingUp },
-            { id: "activities" as const, label: "Activity Log", icon: Activity },
-            { id: "achievements" as const, label: "Achievements", icon: Award },
-            { id: "leaderboards" as const, label: "Leaderboards", icon: Trophy },
-          ].map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.id;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => {
-                  setTab(t.id);
-                  setError(null);
-                }}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  active
-                    ? "bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 shadow-2xs"
-                    : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                <span>{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <PageHeader title="Learning Progress & Mastery" description="Revisit what you know. Give the difficult words a little more attention.">
+        <Tabs<ProgressTab>
+          label="Progress views"
+          value={tab}
+          onChange={(id) => { setTab(id); setError(null); }}
+          items={[
+            { id: "words", label: "My Words", icon: TrendingUp },
+            { id: "activities", label: "Activity Log", icon: Activity },
+            { id: "achievements", label: "Achievements", icon: Award },
+            { id: "leaderboards", label: "Leaderboards", icon: Trophy },
+          ]}
+        />
+      </PageHeader>
 
       {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
       {/* Auth Gate for Personal Progress Tabs */}
       {tab !== "leaderboards" && !account?.authenticated ? (
-        <div className="p-10 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-center space-y-4">
-          <h2 className="text-lg font-editorial font-semibold text-stone-900 dark:text-stone-100">
+        <div className="p-10 rounded-xl border border-line bg-surface text-center space-y-4">
+          <h2 className="text-lg font-word font-semibold text-ink">
             Sign in to view your personal vocabulary mastery
           </h2>
-          <p className="text-xs text-stone-500 max-w-md mx-auto">
+          <p className="text-xs text-ink-subtle max-w-md mx-auto">
             Your learning queue, trouble words, activity history, and earned achievements are synced directly from your Vocabulary.com account.
           </p>
           <button
             type="button"
             onClick={onRequestLogin}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 text-white text-xs font-medium"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-on-accent text-xs font-medium"
           >
             <LogIn className="w-3.5 h-3.5" />
             <span>Sign In</span>
@@ -192,7 +165,7 @@ export const ProgressView: React.FC<{
       {/* TAB 1: MY WORDS */}
       {tab === "words" && account?.authenticated && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { id: "learning" as const, label: "Words I'm Learning" },
               { id: "trouble" as const, label: "Trouble Words" },
@@ -201,11 +174,12 @@ export const ProgressView: React.FC<{
               <button
                 key={f.id}
                 type="button"
+                aria-pressed={wordFilter === f.id}
                 onClick={() => setWordFilter(f.id)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                   wordFilter === f.id
-                    ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
-                    : "border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400"
+                    ? "border-accent-line bg-accent-soft text-accent-ink"
+                    : "border-line bg-surface text-ink-muted"
                 }`}
               >
                 {f.label}
@@ -214,11 +188,9 @@ export const ProgressView: React.FC<{
           </div>
 
           {loading ? (
-            <div className="p-12 flex justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-700" />
-            </div>
+            <LoadingBlock label="Loading your progress…" />
           ) : words.length > 0 ? (
-            <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 divide-y divide-stone-100 dark:divide-stone-800">
+            <div className="rounded-xl border border-line bg-surface divide-y divide-line">
               {words.map((w) => {
                 const pct = Math.round((w.progress || 0) * 100);
                 return (
@@ -230,32 +202,27 @@ export const ProgressView: React.FC<{
                       <button
                         type="button"
                         onClick={() => onOpenWord(w.word)}
-                        className="text-lg font-editorial font-semibold text-stone-900 dark:text-stone-100 hover:text-emerald-700 dark:hover:text-emerald-400"
+                        className="font-word text-[1.125rem] font-semibold text-ink hover:text-accent-ink text-left [overflow-wrap:anywhere]"
                       >
                         {w.word}
                       </button>
-                      <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
+                      <p className="font-read text-read text-ink-muted line-clamp-2">
                         {w.definition}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="w-28">
-                        <div className="flex justify-between text-[11px] font-mono text-stone-500 mb-1">
+                        <div className="flex justify-between text-[11px] font-data text-ink-subtle mb-1">
                           <span>Mastery</span>
                           <span>{pct}%</span>
                         </div>
-                        <div className="h-1.5 w-full rounded-full bg-stone-100 dark:bg-stone-800 overflow-hidden">
-                          <div
-                            className="h-full bg-emerald-600 rounded-full"
-                            style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                          />
-                        </div>
+                        <Meter label={`Mastery of ${w.word}`} value={pct} />
                       </div>
                       <button
                         type="button"
                         onClick={() => handlePriorityChange(w.word, 1)}
-                        className="px-2.5 py-1 text-[11px] rounded border border-stone-200 dark:border-stone-800 hover:border-emerald-500 text-stone-600 dark:text-stone-300"
+                        className="px-2.5 py-1 text-[11px] rounded border border-line hover:border-accent-line text-ink-muted"
                       >
                         Boost Priority
                       </button>
@@ -265,9 +232,9 @@ export const ProgressView: React.FC<{
               })}
             </div>
           ) : (
-            <div className="p-8 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-center text-sm text-stone-500">
-              No words found in the "{wordFilter}" category yet.
-            </div>
+            <EmptyState icon={TrendingUp} title={`No ${wordFilter} words yet`}
+              description="Your words will appear here as you study. A short practice round is a good place to begin."
+              action={<Button variant="primary" onClick={() => onStartPractice(0)}>Start Practice</Button>} />
           )}
         </div>
       )}
@@ -276,9 +243,7 @@ export const ProgressView: React.FC<{
       {tab === "activities" && account?.authenticated && (
         <div className="space-y-4">
           {loading ? (
-            <div className="p-12 flex justify-center">
-              <Loader2 className="w-6 h-6 animate-spin text-emerald-700" />
-            </div>
+            <LoadingBlock label="Loading your progress…" />
           ) : activitiesResp?.activities && activitiesResp.activities.length > 0 ? (
             <div className="space-y-3">
               {activitiesResp.activities.map((act) => {
@@ -287,13 +252,13 @@ export const ProgressView: React.FC<{
                 return (
                   <div
                     key={act.id}
-                    className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex items-center justify-between gap-4"
+                    className="p-4 rounded-xl border border-line bg-surface flex items-center justify-between gap-4"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+                      <p className="text-sm font-semibold text-ink">
                         {act.name || `Activity #${act.id}`}
                       </p>
-                      <p className="text-xs text-stone-500">
+                      <p className="text-xs text-ink-subtle">
                         Type: {act.activity_type || act.type || "practice"} · Progress: {pct}%
                       </p>
                     </div>
@@ -301,7 +266,7 @@ export const ProgressView: React.FC<{
                       <button
                         type="button"
                         onClick={() => onStartPractice(listId)}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 text-white text-xs font-medium"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent text-on-accent text-xs font-medium"
                       >
                         <span>Practice</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -314,16 +279,15 @@ export const ProgressView: React.FC<{
                 <button
                   type="button"
                   onClick={() => loadActivities(activitiesResp.next_page_uri)}
-                  className="px-4 py-2 rounded-lg border border-stone-200 dark:border-stone-800 text-xs font-medium"
+                  className="px-4 py-2 rounded-lg border border-line text-xs font-medium"
                 >
                   Load Next Page
                 </button>
               )}
             </div>
           ) : (
-            <div className="p-8 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-center text-sm text-stone-500">
-              No recent activities recorded.
-            </div>
+            <EmptyState icon={Activity} title="Your next session starts the story" description="Completed and in-progress learning activities will appear here."
+              action={<Button onClick={() => onStartPractice(0)}>Start Practice</Button>} />
           )}
         </div>
       )}
@@ -331,23 +295,20 @@ export const ProgressView: React.FC<{
       {/* TAB 3: ACHIEVEMENTS */}
       {tab === "achievements" && account?.authenticated && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {achievements.map((ach) => (
+          {loading && <LoadingBlock label="Loading achievements…" className="col-span-full" />}
+          {!loading && achievements.length === 0 && <EmptyState className="col-span-full" icon={Award} title="Milestones take a little practice" description="Your earned achievements will appear here as your vocabulary grows." />}
+          {!loading && achievements.map((ach) => (
             <div
               key={ach.id}
-              className="p-4 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-2"
+              className="p-4 rounded-xl border border-line bg-surface space-y-2"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold text-emerald-700 dark:text-emerald-400">
+                <span className="text-xs font-data font-semibold text-accent-ink">
                   {ach.id}
                 </span>
-                <span className="text-xs text-stone-500">Milestone {ach.milestone}</span>
+                <span className="text-xs text-ink-subtle">Milestone {ach.milestone}</span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-stone-100 dark:bg-stone-800 overflow-hidden">
-                <div
-                  className="h-full bg-amber-500 rounded-full"
-                  style={{ width: `${Math.min(100, Math.round(ach.progress || 0))}%` }}
-                />
-              </div>
+              <Meter label={`Achievement ${ach.id} progress`} tone="warning" value={ach.progress || 0} />
             </div>
           ))}
         </div>
@@ -356,7 +317,7 @@ export const ProgressView: React.FC<{
       {/* TAB 4: LEADERBOARDS */}
       {tab === "leaderboards" && (
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { id: "points" as const, label: "Top Points" },
               { id: "mastered" as const, label: "Words Mastered" },
@@ -364,11 +325,12 @@ export const ProgressView: React.FC<{
               <button
                 key={m.id}
                 type="button"
+                aria-pressed={lbMetric === m.id}
                 onClick={() => setLbMetric(m.id)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-medium border ${
                   lbMetric === m.id
-                    ? "border-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
-                    : "border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900"
+                    ? "border-accent-line bg-accent-soft text-accent-ink"
+                    : "border-line bg-surface"
                 }`}
               >
                 {m.label}
@@ -376,29 +338,26 @@ export const ProgressView: React.FC<{
             ))}
           </div>
 
-          {leaderboard?.rows && leaderboard.rows.length > 0 && (
-            <div className="rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 divide-y divide-stone-100 dark:divide-stone-800">
-              {leaderboard.rows.map((row) => (
-                <div
-                  key={row.rank}
-                  className="px-5 py-3 flex items-center justify-between text-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="w-7 font-mono text-xs text-stone-400">#{row.rank}</span>
-                    <span className="font-medium text-stone-900 dark:text-stone-100">
-                      {row.profile?.nickname || "Learner"}
-                    </span>
-                    {row.profile?.level_name && (
-                      <span className="text-xs text-stone-400">({row.profile.level_name})</span>
-                    )}
-                  </div>
-                  <span className="font-mono font-semibold text-emerald-700 dark:text-emerald-400">
-                    {row.points.toLocaleString()}
-                  </span>
-                </div>
-              ))}
+          {loading ? <LoadingBlock label="Loading leaderboard…" /> : leaderboard?.rows?.length ? (
+            <div className="rounded-card border border-line bg-surface overflow-x-auto">
+              <table className="w-full text-left text-ui">
+                <caption className="sr-only">{lbMetric === "points" ? "Top Points" : "Words Mastered"} leaderboard</caption>
+                <thead className="bg-sunken border-b border-line font-nav text-meta text-ink-muted">
+                  <tr><th scope="col" className="px-5 py-3 font-medium">Rank</th><th scope="col" className="px-3 py-3 font-medium">Learner</th><th scope="col" className="px-5 py-3 text-right font-medium">{lbMetric === "points" ? "Points" : "Words mastered"}</th></tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {leaderboard.rows.map((row) => (
+                    <tr key={row.rank}>
+                      <td className="px-5 py-3 font-data tabular-nums text-ink-subtle">#{row.rank}</td>
+                      <td className="px-3 py-3 font-nav"><span className="font-medium">{row.profile?.nickname || "Learner"}</span>{row.profile?.level_name && <span className="block text-meta text-ink-muted mt-0.5">{row.profile.level_name}</span>}</td>
+                      <td className="px-5 py-3 text-right font-data font-medium tabular-nums text-accent-ink">{row.points.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          ) : !error && <EmptyState icon={Trophy} title="No leaderboard entries yet" description="Try a different ranking to explore the community's progress." />}
+
         </div>
       )}
     </div>

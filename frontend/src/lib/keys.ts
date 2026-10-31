@@ -11,7 +11,7 @@ export function isModalOpen(): boolean {
 
 /** True when a plain single-key shortcut (no modifiers, not typing, no modal) should be handled. */
 export function acceptsPlainShortcut(e: KeyboardEvent): boolean {
-  if (e.metaKey || e.ctrlKey || e.altKey) return false;
+  if (e.defaultPrevented || e.isComposing || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return false;
   if (isModalOpen()) return false;
   return !isTypingTarget(e.target);
 }

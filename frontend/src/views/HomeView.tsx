@@ -201,10 +201,6 @@ export const HomeView: React.FC<{
 
         {/* Word of the Day */}
         <Card pad="lg" className="lg:col-span-5 flex flex-col relative overflow-hidden">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 w-56 h-56 rounded-full bg-accent-soft blur-3xl opacity-70"
-          />
           {wod ? (
             <div className="relative flex flex-col gap-4 h-full">
               <div className="flex items-center justify-between gap-3">
@@ -216,7 +212,7 @@ export const HomeView: React.FC<{
               <button
                 type="button"
                 onClick={() => onOpenWord(wod.word)}
-                className="self-start font-word text-[2.5rem] leading-none font-semibold tracking-[-0.03em] text-ink hover:text-accent-ink transition-colors text-left rounded"
+                className="self-start max-w-full font-word text-[2.25rem] leading-tight font-semibold tracking-[-0.03em] text-ink hover:text-accent-ink transition-colors text-left rounded [overflow-wrap:anywhere]"
               >
                 {wod.word}
               </button>
