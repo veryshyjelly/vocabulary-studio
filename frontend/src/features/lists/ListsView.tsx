@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ListChecks, Search, Plus, Sparkles, Play, SpellCheck, Layers, Trash2, Star, ArrowLeft, ArrowRight, RotateCw, BookOpen } from "lucide-react";
 import type { AccountStatusDTO, ProfileListSummary, SmartSearchResponse, VocabularyList, FlashcardListResponse, ListProgressStatus, GrabbedWord } from "../../lib/bridge";
 import { getBridge, formatError } from "../../lib/bridge";
@@ -53,6 +53,29 @@ export const ListsView: React.FC<{
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const isLoading = loading || detailLoading;
+  const accountKey = `${Boolean(account?.authenticated)}:${account?.uid || ""}`;
+  const detailRequest = useRef(0);
+  const detailAccount = useRef<string | null>(accountKey);
+
+  useEffect(() => {
+    detailAccount.current = accountKey;
+    return () => {
+      detailAccount.current = null;
+      detailRequest.current++;
+    };
+  }, [accountKey]);
+
+  const leaveListDetail = useCallback(() => {
+    detailRequest.current++;
+    setSelectedList(null);
+    setListProgress(null);
+    setFlashcards(null);
+    setShowFlashcards(false);
+    setDetailLoading(false);
+    setError(null);
+  }, []);
 
   const loadUserLists = useCallback(async () => {
     if (!account?.authenticated) return;
@@ -88,30 +111,37 @@ export const ListsView: React.FC<{
 
   const openListDetail = useCallback(
     async (listId: number) => {
-      if (!listId || listId <= 0) return;
-      setLoading(true);
+      if (!listId || listId <= 0 || detailAccount.current !== accountKey) return;
+      const request = ++detailRequest.current;
+      const isCurrent = () => request === detailRequest.current && detailAccount.current === accountKey;
+      setDetailLoading(true);
       setError(null);
+      setSelectedList(null);
+      setListProgress(null);
+      setFlashcards(null);
       setShowFlashcards(false);
       setConfirmDelete(false);
       try {
         const wl = await getBridge().lists.GetListDetail(listId);
+        if (!isCurrent()) return;
         setSelectedList(wl);
         if (account?.authenticated) {
           getBridge()
             .progress.GetListProgress(listId)
-            .then((lp) => setListProgress(lp))
-            .catch(() => setListProgress(null));
+            .then((lp) => { if (isCurrent()) setListProgress(lp); })
+            .catch(() => { if (isCurrent()) setListProgress(null); });
         }
       } catch (err) {
-        setError(formatError(err));
+        if (isCurrent()) setError(formatError(err));
       } finally {
-        setLoading(false);
+        if (isCurrent()) setDetailLoading(false);
       }
     },
-    [account?.authenticated]
+    [account?.authenticated, accountKey]
   );
 
   useEffect(() => {
+    leaveListDetail();
     if (initialListId > 0) {
       openListDetail(initialListId);
     } else if (account?.authenticated) {
@@ -119,22 +149,26 @@ export const ListsView: React.FC<{
     } else {
       handleSearchLists();
     }
-  }, [initialListId, account?.authenticated]);
+    return () => { detailRequest.current++; };
+  }, [initialListId, accountKey]);
 
   const handleOpenFlashcards = async () => {
     if (!selectedList) return;
-    setLoading(true);
+    const request = detailRequest.current;
+    const isCurrent = () => request === detailRequest.current && detailAccount.current === accountKey;
+    setDetailLoading(true);
     setError(null);
     try {
       const fc = await getBridge().lists.GetFlashcards(selectedList.wordlistid);
+      if (!isCurrent()) return;
       setFlashcards(fc);
       setCardIndex(0);
       setCardFlipped(false);
       setShowFlashcards(true);
     } catch (err) {
-      setError(formatError(err));
+      if (isCurrent()) setError(formatError(err));
     } finally {
-      setLoading(false);
+      if (isCurrent()) setDetailLoading(false);
     }
   };
 
@@ -247,7 +281,7 @@ export const ListsView: React.FC<{
     try {
       await getBridge().lists.DeleteList(selectedList.wordlistid);
       setNotice(`Deleted list "${selectedList.name}".`);
-      setSelectedList(null);
+      leaveListDetail();
       setConfirmDelete(false);
       loadUserLists();
     } catch (err) {
@@ -277,10 +311,7 @@ export const ListsView: React.FC<{
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => {
-              setSelectedList(null);
-              setShowFlashcards(false);
-            }}
+            onClick={leaveListDetail}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-muted hover:text-ink"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -317,13 +348,13 @@ export const ListsView: React.FC<{
         )}
 
         {/* Destructive Delete Confirmation Dialog */}
-        <Dialog open={confirmDelete} onClose={() => { if (!loading) setConfirmDelete(false); }} labelledBy="delete-list-title">
+        <Dialog open={confirmDelete} onClose={() => { if (!isLoading) setConfirmDelete(false); }} labelledBy="delete-list-title">
           <div className="p-6 space-y-4">
             <h2 id="delete-list-title" className="font-nav text-ui font-semibold">Delete this list?</h2>
             <p className="reading-copy text-ink-muted">“{selectedList.name}” will be permanently deleted from your account.</p>
             <div className="flex justify-end gap-2">
-              <Button onClick={() => setConfirmDelete(false)} disabled={loading}>Cancel</Button>
-              <Button variant="danger" onClick={handleDeleteCurrentList} loading={loading}>Confirm Delete</Button>
+              <Button onClick={() => setConfirmDelete(false)} disabled={isLoading}>Cancel</Button>
+              <Button variant="danger" onClick={handleDeleteCurrentList} loading={isLoading}>Confirm Delete</Button>
             </div>
           </div>
         </Dialog>
@@ -390,7 +421,7 @@ export const ListsView: React.FC<{
               />
               <button
                 type="submit"
-                disabled={!addWordsInput.trim() || loading}
+                disabled={!addWordsInput.trim() || isLoading}
                 className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-accent text-on-accent text-xs font-medium disabled:opacity-40"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -511,6 +542,7 @@ export const ListsView: React.FC<{
           label="List tools"
           value={activeTab}
           onChange={(id) => {
+            leaveListDetail();
             setActiveTab(id);
             setError(null);
             if (id === "my-lists") loadUserLists();
@@ -551,7 +583,7 @@ export const ListsView: React.FC<{
                 Sign In
               </button>
             </div>
-          ) : loading ? (
+          ) : isLoading ? (
             <LoadingBlock label="Loading your lists…" />
           ) : userLists.filter((list) => list.name.toLowerCase().includes(listFilter.toLowerCase())).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -620,16 +652,16 @@ export const ListsView: React.FC<{
             />
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="px-4 py-2 rounded-xl bg-accent hover:bg-accent-hover text-on-accent text-xs font-medium"
             >
               Search
             </button>
           </form>
 
-          {loading && <LoadingBlock label="Searching vocabulary lists…" />}
-          {!loading && searchResults?.results?.length === 0 && !error && <EmptyState icon={Search} title="No lists found" description="Try a different subject, exam, or author." />}
-          {!loading && searchResults?.results && searchResults.results.length > 0 && (
+          {isLoading && <LoadingBlock label="Searching vocabulary lists…" />}
+          {!isLoading && searchResults?.results?.length === 0 && !error && <EmptyState icon={Search} title="No lists found" description="Try a different subject, exam, or author." />}
+          {!isLoading && searchResults?.results && searchResults.results.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {searchResults.results.map((item) => (
                 <div
@@ -725,10 +757,10 @@ export const ListsView: React.FC<{
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="px-5 py-2.5 rounded-lg bg-accent hover:bg-accent-hover text-on-accent text-xs font-medium"
           >
-            {loading ? "Saving List..." : "Create Vocabulary List"}
+            {isLoading ? "Saving List..." : "Create Vocabulary List"}
           </button>
         </form>
       )}
@@ -753,10 +785,10 @@ export const ListsView: React.FC<{
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="submit"
-                disabled={loading || !grabText.trim()}
+                disabled={isLoading || !grabText.trim()}
                 className="px-4 py-2 rounded-lg bg-accent hover:bg-accent-hover text-on-accent text-xs font-medium"
               >
-                {loading ? "Analyzing Text..." : "Extract Vocabulary"}
+                {isLoading ? "Analyzing Text..." : "Extract Vocabulary"}
               </button>
               {grabbedWords.length > 0 && (
                 <button

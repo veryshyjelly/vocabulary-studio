@@ -46,6 +46,13 @@ Land preservation/regression tests with the implementation that satisfies them. 
 
 ## Validation
 
-Run focused tests appropriate to the affected layers and preserve the characterized behavior.
+### Implementation evidence
 
-Run `openspec validate scope-list-progress-to-selected-list --strict --no-interactive` before implementation is considered complete.
+- Local request generations guard detail, progress, and flashcard responses, including success, failure, and detail-loading completion. Account UID/authentication changes and navigation/unmount invalidate outstanding requests.
+- Previously displayed progress is cleared on selection changes. A separate detail-loading flag prevents unrelated overview requests from clearing active detail loading.
+- Two preservation tests passed before implementation. Six targeted stale-response regressions failed before the fix; the expanded focused suite now passes all 12 tests.
+- `bun run typecheck` and the complete `bun run test` frontend suite passed. No SDK or bridge contract was changed.
+
+cd frontend && bun run typecheck && bun run test
+
+Also run `openspec validate scope-list-progress-to-selected-list --strict --no-interactive` and confirm all tasks are checked only after their verification succeeds.
