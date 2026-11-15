@@ -69,3 +69,53 @@ The SDK is a nested module: root-level `go test ./...` does not include its test
 Use `make test` for the whole project or run `go test ./...` inside `sdk/`.
 Build the frontend before commands that load the desktop entry point, because
 `frontend/embed.go` embeds the generated `frontend/dist/` directory.
+
+See the [development guide](DEVELOPMENT.md) for setup, packaging, individual test
+commands, CLI usage, and visual previews.
+
+## Implementation notes
+
+### SDK authentication and gameplay
+
+The SDK owns Vocabulary.com authentication, dictionary lookups, lists, learning
+progress, and gameplay. Authentication combines web session cookies with bearer
+JWTs from the upstream token endpoint; concurrent token requests are deduplicated
+with `singleflight`.
+
+VocabTrainer, list practice, Spelling Bee, and quizzes share the SDK's timing
+abstractions and pacing controls. `PacingGuard` spaces answer submissions and
+limits bursts of requests. Keep this behavior in the SDK rather than duplicating
+it in desktop or CLI callers.
+
+`TrainerSession` tracks idle, active-question, question-completed, and trial-over
+states. First attempts can be evaluated and persisted by the server; subsequent
+attempts can be evaluated locally. The `EvaluatedLocally` result distinguishes
+these paths.
+
+See the [SDK guide](../sdk/README.md) for usage and independent library tests.
+
+### Desktop services and session storage
+
+Seven Wails services expose authentication, practice, dictionary, lists,
+discovery, progress, and settings through generated TypeScript bindings.
+Desktop adapters return UI DTOs rather than raw SDK session data. Passwords,
+cookies, and bearer tokens stay out of bridge responses and browser storage.
+
+Session persistence supports the OS keychain, a restricted local file with
+`0600` permissions and atomic writes, or ephemeral memory. Storage backends do
+not silently downgrade on failure.
+
+Upstream HTML is parsed into structured `RichSpan` data before reaching React.
+The frontend renders these spans without `dangerouslySetInnerHTML`. Desktop
+services cancel obsolete autocomplete, lookup, and search requests.
+
+### Frontend
+
+The React and TypeScript frontend uses Vite, Tailwind CSS, Lucide icons, and Bun.
+The application shell provides Home, Practice, Dictionary, My Lists, Discover,
+Progress, and Settings views. Shared controls, styles, and the bridge adapter
+remain separate from feature screens.
+
+Go embeds the production frontend assets. The preview entry under
+`frontend/tests/` uses sample data and is excluded from the production bundle;
+use the native Wails application to verify real account and SDK behavior.
