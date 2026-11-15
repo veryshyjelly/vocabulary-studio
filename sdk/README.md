@@ -66,6 +66,14 @@ authentication is still invalidated. These guarantees do not assert remote token
 revocation. Custom session stores must not call client lifecycle methods from
 their `Load`, `Save`, or `Clear` callbacks, which execute under lifecycle ordering.
 
+Use `client.SetSessionStore(ctx, destination)` to change persistence backends
+without replacing the client or its active trainer sessions. It saves the current
+snapshot into the actual destination instance before selecting it; a failed save
+leaves the previous backend selected. Pending token work and later session saves
+use the selected backend after the switch returns. This operation preserves the
+authentication generation and pacing state, rejects a nil destination, and does
+not clear the previous store. Callers retiring a durable backend own its cleanup.
+
 ## Work on the library
 
 Run these commands from `sdk/`:

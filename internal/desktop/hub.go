@@ -20,6 +20,7 @@ import (
 // Hub is safe for concurrent use by multiple goroutines.
 type Hub struct {
 	mu         sync.RWMutex
+	storeMu    sync.Mutex // Serializes backend switching and old-store cleanup.
 	configDir  string
 	prefs      AppPreferences
 	client     *vocab.Client
@@ -294,32 +295,21 @@ func (h *Hub) SwitchSessionStoreMode(ctx context.Context, newMode SessionStoreMo
 	if !newMode.IsValid() {
 		return fmt.Errorf("vocab: invalid session store mode %q (expected keyring, file, or memory)", newMode)
 	}
+	h.storeMu.Lock()
+	defer h.storeMu.Unlock()
 
 	h.mu.Lock()
 	oldMode := h.prefs.SessionStoreMode
-	oldClient := h.client
+	client := h.client
 	h.mu.Unlock()
 
 	if oldMode == newMode {
 		return nil
 	}
 
-	snap := oldClient.ExportSession()
 	newStore := h.buildSessionStore(newMode)
-
-	// Explicitly verify the new store can save before switching so we never silently downgrade.
-	if snap != nil && (snap.GUID != "" || len(snap.Cookies) > 0) {
-		if err := newStore.Save(ctx, snap); err != nil {
-			return fmt.Errorf("vocab: failed to persist session to %s store: %w", newMode, err)
-		}
-	}
-
-	newClient, err := h.buildClientForMode(newMode)
-	if err != nil {
-		return err
-	}
-	if snap != nil {
-		newClient.ImportSession(snap)
+	if err := client.SetSessionStore(ctx, newStore); err != nil {
+		return fmt.Errorf("vocab: failed to persist session to %s store: %w", newMode, err)
 	}
 
 	// Best-effort clear old store
@@ -327,9 +317,8 @@ func (h *Hub) SwitchSessionStoreMode(ctx context.Context, newMode SessionStoreMo
 	_ = oldStore.Clear(ctx)
 
 	h.mu.Lock()
-	h.client = newClient
 	h.prefs.SessionStoreMode = newMode
-	err = h.savePreferencesLocked()
+	err := h.savePreferencesLocked()
 	h.mu.Unlock()
 	return err
 }

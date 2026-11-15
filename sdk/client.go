@@ -266,6 +266,27 @@ func (c *Client) FlushSession(ctx context.Context) error {
 	return c.flushSessionLocked(ctx)
 }
 
+// SetSessionStore saves the current session to store before selecting it for all
+// subsequent persistence, including persistence from existing gameplay sessions.
+// A failed save leaves the current store selected. The previous store is not
+// cleared; callers that retire persistent backends own their cleanup.
+// Store callbacks must not re-enter client lifecycle methods.
+func (c *Client) SetSessionStore(ctx context.Context, store SessionStore) error {
+	if store == nil {
+		return fmt.Errorf("vocab: session store is required")
+	}
+	c.lifecycleMu.Lock()
+	defer c.lifecycleMu.Unlock()
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := store.Save(ctx, c.ExportSession()); err != nil {
+		return err
+	}
+	c.sessionStore = store
+	return nil
+}
+
 func (c *Client) flushSessionLocked(ctx context.Context) error {
 	if c.sessionStore == nil {
 		return nil

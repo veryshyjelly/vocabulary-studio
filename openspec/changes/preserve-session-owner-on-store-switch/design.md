@@ -46,6 +46,17 @@ Land preservation/regression tests with the implementation that satisfies them. 
 
 ## Validation
 
-Run focused tests appropriate to the affected layers and preserve the characterized behavior.
+### Implementation evidence
 
-Run `openspec validate preserve-session-owner-on-store-switch --strict --no-interactive` before implementation is considered complete.
+- `Client.SetSessionStore` saves to the actual destination instance and changes the selected backend under the authentication lifecycle mutex. A nil destination is rejected and failed saves retain the previous backend. It preserves the authentication generation, client, trainer service, and pacing guard; callers own cleanup of retired stores.
+- The desktop switches the existing client rather than constructing a replacement. A dedicated switch mutex orders backend changes and existing old-store cleanup without holding the general Hub mutex across backend IO.
+- Focused characterization passed before implementation for active-question/attempt/feedback preservation, same-mode switching, and failed destination saves.
+- The new active-trainer regression failed before the fix because forcing refresh through the original owner recreated `session.json`; it passes after the fix. Additional SDK coverage proves a refresh pending during a switch persists its eventual token to the actual destination instance.
+- Focused SDK and desktop tests passed. The parent integration run verified the full SDK and desktop/CLI race suites, all 18 strict OpenSpec validations, and diff whitespace checks against the combined worktree.
+- Existing desktop integration setup now selects temporary memory storage before initialization, keeping tests independent of the user's OS keychain.
+
+The separate migration-failure-semantics proposal still owns transactional preference publication and reporting/retry of retired-store cleanup failures. This change retains the existing preference-save and best-effort cleanup outcomes.
+
+SDK race tests and CGO_ENABLED=1 go test -race ./internal/...
+
+Also run `openspec validate preserve-session-owner-on-store-switch --strict --no-interactive` and confirm all tasks are checked only after their verification succeeds.

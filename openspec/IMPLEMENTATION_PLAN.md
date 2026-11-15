@@ -43,5 +43,6 @@ Dashboard availability and PR validation are evidence-backed production-readines
 Implemented and locally validated:
 
 - [prevent-stale-auth-refresh-commit](changes/prevent-stale-auth-refresh-commit/proposal.md)
+- [preserve-session-owner-on-store-switch](changes/preserve-session-owner-on-store-switch/proposal.md)
 
-8 changes remain planned. Completed changes await review, synchronization, and archive.
+7 changes remain planned. Completed changes await review, synchronization, and archive.

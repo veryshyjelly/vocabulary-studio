@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -230,6 +232,16 @@ func TestDesktopHubAndServicesEndToEnd(t *testing.T) {
 	var emittedEvents []string
 
 	cfgDir := t.TempDir()
+	// Keep the end-to-end test independent of the user's real OS keychain.
+	prefs := DefaultPreferences()
+	prefs.SessionStoreMode = SessionStoreMemory
+	prefsJSON, err := json.Marshal(prefs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(cfgDir, "preferences.json"), prefsJSON, 0o600); err != nil {
+		t.Fatal(err)
+	}
 	hub, err := NewHub(HubOptions{
 		ConfigDir: cfgDir,
 		ClientOpts: []vocab.Option{
