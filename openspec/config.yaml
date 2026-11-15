@@ -1,0 +1,36 @@
+schema: spec-driven
+
+context: |
+  Vocabulary Studio provides a Vocabulary.com desktop app, CLI, and reusable Go SDK.
+  Existing behavior is documented in openspec/specs; these are baseline contracts,
+  not a roadmap. Confirm requirements against working-tree source and tests.
+  Read docs/ARCHITECTURE.md and docs/DEVELOPMENT.md for the current layout and commands.
+  Preserve the independent sdk/ Go module: it must work without Wails, CGO,
+  desktop services, or frontend assets. Root Go tests do not include SDK tests.
+  Keep upstream authentication, token refresh, rate limiting, and gameplay pacing
+  inside the SDK. Desktop services expose safe DTOs through generated Wails bindings;
+  React features access them through frontend/src/lib/bridge.ts.
+  Never expose passwords, cookies, or bearer tokens in bridge responses, browser
+  storage, logs, specifications, or fixtures. Do not silently downgrade session stores.
+  Treat upstream HTML as untrusted and render structured safe rich text in the UI.
+  Use deterministic offline tests, replayed sanitized cassettes, and fake clocks.
+  Do not require live Vocabulary.com credentials for routine validation.
+  Regenerate Wails bindings after service contract changes; do not edit generated files.
+  Packaged releases currently target macOS; do not imply Windows or Linux releases exist.
+
+rules:
+  proposal:
+    - Describe the observable behavior change, affected capabilities, and what is out of scope.
+    - Identify compatibility effects for the standalone SDK, CLI, desktop bridge, and stored sessions when relevant.
+  specs:
+    - Use SHALL or MUST requirements with at least one four-hash Scenario containing WHEN and THEN steps.
+    - Describe observable behavior and include relevant failure cases; do not invent upstream guarantees.
+    - For changes, use ADDED, MODIFIED, REMOVED, or RENAMED requirement deltas against the baseline capability specs.
+    - Preserve complete existing requirement blocks when writing MODIFIED deltas.
+  design:
+    - Explain affected module boundaries and any changes to authentication, persistence, pacing, or untrusted content handling.
+    - Include compatibility and migration details when changing public SDK or bridge contracts.
+  tasks:
+    - Use checkable tasks grouped by affected layer and include focused validation for changed behavior and failure paths.
+    - Run SDK tests from sdk/ separately from root desktop and CLI tests; make test covers both and the frontend.
+    - Include binding regeneration and frontend rebuild tasks when Wails service contracts change.

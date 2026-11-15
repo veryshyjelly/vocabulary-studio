@@ -102,6 +102,7 @@ has no dependency on the desktop app or its frontend.
 | [Development guide](docs/DEVELOPMENT.md) | Prerequisites, source builds, packaging, tests, CLI usage, and visual previews. |
 | [Go SDK](sdk/README.md) | Library usage, authentication, session persistence, and SDK development. |
 | [Project structure](docs/ARCHITECTURE.md) | Module layout, dependency boundaries, and implementation notes. |
+| [OpenSpec](openspec/README.md) | Current capability specs and the workflow for proposing changes. |
 | [Release guide](docs/RELEASING.md) | macOS releases, signing, and automatic Homebrew cask updates. |
 
 Packaged downloads are available for macOS. For native builds on other platforms,
