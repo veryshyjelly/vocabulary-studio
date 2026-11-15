@@ -1,0 +1,117 @@
+name: Release macOS app
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: amd64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+
+          version = json.load(open("frontend/package.json"))["version"]
+          tag = os.environ["RELEASE_TAG"]
+          if not re.fullmatch(r"v(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", tag):
+              raise SystemExit("Releases require a stable vX.Y.Z tag")
+          if tag != f"v{version}":
+              raise SystemExit(f"Tag {tag} does not match frontend/package.json version {version}")
+          PY
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            sdk/go.sum
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - name: Install matching Wails CLI
+        run: |
+          go install github.com/wailsapp/wails/v3/cmd/wails3@$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3)
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Build and verify app bundle and archive
+        env:
+          GOARCH: ${{ matrix.arch }}
+        run: ./scripts/package-macos.sh
+      - name: Test SDK and desktop services
+        run: |
+          make test-sdk test-desktop
+          cd frontend
+          bun run test
+      - uses: actions/upload-artifact@v6
+        with:
+          name: macos-${{ matrix.arch }}
+          path: |
+            dist/*.zip
+            dist/*.zip.sha256
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          pattern: macos-*
+          merge-multiple: true
+          path: release
+      - name: Verify and publish both architectures
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="${RELEASE_TAG#v}"
+          for arch in arm64 amd64; do
+            test -f "vocabulary-studio_${version}_darwin_${arch}.zip"
+          done
+          cat ./*.zip.sha256 > checksums.txt
+          sha256sum --check checksums.txt
+          cat > release-notes.md <<'NOTES'
+          Install on macOS 13 or later using Homebrew:
+
+          ```sh
+          brew install --cask veryshyjelly/tap/vocabulary-studio
+          ```
+
+          The tap checks for new releases hourly. For a manual install, download
+          the ZIP matching your Mac (`arm64` for Apple Silicon, `amd64` for Intel),
+          unzip it, and drag Vocabulary Studio.app into Applications.
+
+          These builds are ad-hoc signed and are not notarized by Apple. If macOS
+          blocks the first launch, open System Settings > Privacy & Security and
+          use Open Anyway after attempting to open the app.
+          NOTES
+          gh release create "$RELEASE_TAG" ./*.zip checksums.txt \
+            --verify-tag --title "Vocabulary Studio $RELEASE_TAG" \
+            --generate-notes --notes-file release-notes.md

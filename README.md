@@ -4,6 +4,41 @@ A complete Vocabulary.com Go SDK and cross-platform native desktop application (
 
 ![Vocabulary Studio practice screen in dark mode with correct-answer feedback](preview.png)
 
+## Install on macOS
+
+Requires macOS 13 Ventura or later. The Homebrew cask installs the prebuilt app
+for Apple Silicon or Intel into Applications:
+
+```bash
+brew install --cask veryshyjelly/tap/vocabulary-studio
+```
+
+Open **Vocabulary Studio** from Applications or Spotlight and sign in. Go, Bun,
+Wails, fonts, and a development server are not needed to run the installed app.
+
+```bash
+# Update the app
+brew update
+brew upgrade --cask vocabulary-studio
+
+# Remove the app (keeps settings and saved sessions)
+brew uninstall --cask vocabulary-studio
+```
+
+You can also download the ZIP for your Mac from
+[Releases](https://github.com/veryshyjelly/vocabulary-studio/releases), unzip it,
+and drag **Vocabulary Studio.app** into **Applications**.
+
+The app is currently ad-hoc signed, without Apple notarization. If macOS blocks
+the first launch, attempt to open the app, then go to **System Settings →
+Privacy & Security → Open Anyway**. Developer ID signing and notarization are
+needed to remove this prompt for downloaded builds.
+
+If you previously copied a local build into `/Applications` or
+`~/Applications`, move that copy to the Trash before installing with Homebrew
+to avoid an existing-app conflict or duplicate Spotlight entries. Your settings
+and sessions are stored separately from the app bundle.
+
 ---
 
 ## 1. Architecture Overview
@@ -46,7 +81,7 @@ The product is structured into three layers:
 - **Wails v3 CLI**, matching the repository's dependency: `go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`.
 - Platform WebView dependencies (macOS WKWebView, Windows WebView2, or Linux GTK3/WebKit2GTK). Note: while the SDK is 100% pure Go (`CGO_ENABLED=0`), building the native Wails desktop binary (`cmd/vocab-desktop`) uses CGo to link native OS window/WebView APIs.
 
-### Build and Install on macOS
+### Build from source on macOS
 
 Clone the repository and run the commands below from its root:
 
@@ -96,9 +131,11 @@ run a development server, install fonts, or create a `.env` file to use the
 desktop app; sign in through its interface. Run the helper again after pulling
 changes, then replace the installed app with the new bundle.
 
-The helper uses ad-hoc signing for local builds. Developer ID signing and
-notarization for distribution are separate release steps. Native builds have been
-validated on Apple Silicon; Intel and older macOS compatibility remain unverified.
+The helper also writes a versioned ZIP and SHA-256 checksum in `dist/`, ready
+for release. Set `GOARCH=arm64` or `GOARCH=amd64` to select the target architecture;
+by default it builds for the current Mac. It uses ad-hoc signing, and requires
+macOS 13 or later. The release workflow builds each architecture on its matching
+Mac runner. See [Releasing](docs/RELEASING.md) for the release and tap update process.
 
 ### Development Build and Optional Binding Regeneration
 
