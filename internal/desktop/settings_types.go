@@ -1,6 +1,6 @@
 package desktop
 
-const AppVersion = "1.0.0"
+const AppVersion = "1.0.1"
 
 // SessionStoreMode identifies how authenticated sessions are persisted on desktop.
 type SessionStoreMode string
