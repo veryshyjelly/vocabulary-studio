@@ -50,6 +50,22 @@ Authentication, session persistence, rate limiting, and gameplay pacing remain
 inside the SDK. Callers should use the SDK's client options rather than duplicate
 these mechanisms.
 
+### Authentication lifecycle
+
+Token acquisition is shared only within the current account generation. Logout,
+successful login, and importing a non-nil session invalidate earlier token work.
+An invalidated `EnsureToken` call returns an error matching `ErrSessionExpired`
+and no token; its late response cannot restore credentials or cookies or persist
+the previous account. New-account callers do not join the previous refresh.
+Canceling one waiting caller still leaves other callers' shared refresh running.
+
+Credential commits and session saves are ordered with logout and session import.
+Logout waits for an already committing save before clearing local credentials
+and the selected store. A store-clear failure is returned to the caller; local
+authentication is still invalidated. These guarantees do not assert remote token
+revocation. Custom session stores must not call client lifecycle methods from
+their `Load`, `Save`, or `Clear` callbacks, which execute under lifecycle ordering.
+
 ## Work on the library
 
 Run these commands from `sdk/`:

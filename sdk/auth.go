@@ -19,6 +19,31 @@ type AuthService struct {
 	client *Client
 }
 
+// Token HTTP responses may update cookies before their body is decoded. Guard
+// those side effects with the same generation as the eventual credential commit.
+type authGenerationJar struct {
+	client     *Client
+	generation uint64
+	jar        http.CookieJar
+}
+
+func (j authGenerationJar) Cookies(u *url.URL) []*http.Cookie {
+	j.client.lifecycleMu.Lock()
+	defer j.client.lifecycleMu.Unlock()
+	if j.generation != j.client.authGeneration {
+		return nil
+	}
+	return j.jar.Cookies(u)
+}
+
+func (j authGenerationJar) SetCookies(u *url.URL, cookies []*http.Cookie) {
+	j.client.lifecycleMu.Lock()
+	defer j.client.lifecycleMu.Unlock()
+	if j.generation == j.client.authGeneration {
+		j.jar.SetCookies(u, cookies)
+	}
+}
+
 // LoginData represents the session/profile payload returned by POST /auth/me.json.
 type LoginData struct {
 	ValidUser     bool        `json:"validUser"`
@@ -133,7 +158,6 @@ func (a *AuthService) Login(ctx context.Context, username, password string) (*Lo
 		_ = a.client.jar.Reset()
 		a.client.ImportSession(prevSnap)
 	}
-
 	form := url.Values{
 		"username":      {username},
 		"password":      {password},
@@ -195,7 +219,6 @@ func (a *AuthService) LoginVocabTrainer(ctx context.Context, username, password 
 		_ = a.client.jar.Reset()
 		a.client.ImportSession(prevSnap)
 	}
-
 	form := url.Values{
 		"username":  {username},
 		"password":  {password},
@@ -249,6 +272,8 @@ func (a *AuthService) LoginVocabTrainer(ctx context.Context, username, password 
 }
 
 func (a *AuthService) commitAuthenticatedUser(ctx context.Context, username string, me *LoginData) {
+	a.client.lifecycleMu.Lock()
+	a.client.authGeneration++
 	a.client.mu.Lock()
 	a.client.username = username
 	if me.GUID != "" {
@@ -259,6 +284,7 @@ func (a *AuthService) commitAuthenticatedUser(ctx context.Context, username stri
 	}
 	a.client.token = nil
 	a.client.mu.Unlock()
+	a.client.lifecycleMu.Unlock()
 
 	// Exchange the user's GUID for an authenticated Bearer JWT on api.vocabulary.com.
 	_, _ = a.EnsureToken(ctx, true)
@@ -287,6 +313,9 @@ func (a *AuthService) Me(ctx context.Context) (*LoginData, error) {
 // cached Bearer token, and persistent SessionStore.
 func (a *AuthService) Logout(ctx context.Context) error {
 	_, _, _ = a.client.doWebGet(ctx, "/auth/logout.json", nil, "application/json")
+	a.client.lifecycleMu.Lock()
+	defer a.client.lifecycleMu.Unlock()
+	a.client.authGeneration++
 	a.client.mu.Lock()
 	a.client.guid = ""
 	a.client.userUID = ""
@@ -317,27 +346,52 @@ func (a *AuthService) EnsureToken(ctx context.Context, forceRefresh bool) (*Toke
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	a.client.lifecycleMu.Lock()
+	generation := a.client.authGeneration
 	if !forceRefresh {
 		if tok := a.validCachedToken(); tok != nil {
+			a.client.lifecycleMu.Unlock()
 			return tok, nil
 		}
 	}
 
-	ch := a.client.tokenGroup.DoChan("token", func() (any, error) {
+	ch := a.client.tokenGroup.DoChan(fmt.Sprintf("token:%d", generation), func() (any, error) {
+		a.client.lifecycleMu.Lock()
+		if generation != a.client.authGeneration {
+			a.client.lifecycleMu.Unlock()
+			return nil, ErrSessionExpired
+		}
 		if !forceRefresh {
 			if tok := a.validCachedToken(); tok != nil {
+				a.client.lifecycleMu.Unlock()
 				return tok, nil
 			}
 		}
+		a.client.mu.RLock()
+		guid := a.client.guid
+		prevTok := a.client.token.Clone()
+		a.client.mu.RUnlock()
+		if guid == "" {
+			if webU, err := url.Parse(a.client.webBaseURL); err == nil && webU != nil {
+				guid = a.client.jar.CookieValue(webU, "guid")
+			}
+		}
+		a.client.lifecycleMu.Unlock()
 		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 30*time.Second)
 		defer cancel()
-		return a.fetchToken(fetchCtx, forceRefresh)
+		return a.fetchToken(fetchCtx, forceRefresh, generation, guid, prevTok)
 	})
+	a.client.lifecycleMu.Unlock()
 
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
 	case res := <-ch:
+		a.client.lifecycleMu.Lock()
+		defer a.client.lifecycleMu.Unlock()
+		if generation != a.client.authGeneration {
+			return nil, ErrSessionExpired
+		}
 		if res.Err != nil {
 			return nil, res.Err
 		}
@@ -348,7 +402,7 @@ func (a *AuthService) EnsureToken(ctx context.Context, forceRefresh bool) (*Toke
 
 func (a *AuthService) validCachedToken() *TokenInfo {
 	a.client.mu.RLock()
-	tok := a.client.token
+	tok := a.client.token.Clone()
 	guid := a.client.guid
 	now := a.client.clock.Now()
 	a.client.mu.RUnlock()
@@ -359,18 +413,8 @@ func (a *AuthService) validCachedToken() *TokenInfo {
 	return nil
 }
 
-func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool) (*TokenInfo, error) {
-	a.client.mu.RLock()
-	guid := a.client.guid
-	prevTok := a.client.token
+func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool, generation uint64, guid string, prevTok *TokenInfo) (*TokenInfo, error) {
 	now := a.client.clock.Now()
-	a.client.mu.RUnlock()
-
-	if guid == "" {
-		if webU, err := url.Parse(a.client.webBaseURL); err == nil && webU != nil {
-			guid = a.client.jar.CookieValue(webU, "guid")
-		}
-	}
 
 	form := url.Values{}
 	if guid != "" {
@@ -389,7 +433,9 @@ func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool) (*Token
 	req.Header.Set("Origin", a.client.webBaseURL)
 	req.Header.Set("Referer", a.client.webBaseURL+"/")
 
-	resp, err := a.client.do(req)
+	httpClient := *a.client.httpClient
+	httpClient.Jar = authGenerationJar{client: a.client, generation: generation, jar: httpClient.Jar}
+	resp, err := a.client.doWithHTTPClient(req, &httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -417,6 +463,11 @@ func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool) (*Token
 	// Subtract 10 seconds safety margin just like vcom/api in module-zcv3kc.js.
 	tok.ExpiresAt = a.client.clock.Now().Add(time.Duration(expiresSec)*time.Second - 10*time.Second)
 
+	a.client.lifecycleMu.Lock()
+	defer a.client.lifecycleMu.Unlock()
+	if generation != a.client.authGeneration {
+		return nil, ErrSessionExpired
+	}
 	a.client.mu.Lock()
 	a.client.token = tok.Clone()
 	if guid != "" {
@@ -424,7 +475,7 @@ func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool) (*Token
 	}
 	a.client.mu.Unlock()
 
-	_ = a.client.FlushSession(ctx)
+	_ = a.client.flushSessionLocked(ctx)
 	return tok.Clone(), nil
 }
 

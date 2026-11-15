@@ -10,13 +10,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 )
 
 func TestAuthRollbackSingleflightAnd401Retry(t *testing.T) {
 	var tokenHits atomic.Int32
 	var apiHits atomic.Int32
 	tokenBarrier := make(chan struct{})
+	tokenStarted := make(chan struct{})
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login/", func(w http.ResponseWriter, r *http.Request) {
@@ -46,7 +46,7 @@ func TestAuthRollbackSingleflightAnd401Retry(t *testing.T) {
 	mux.HandleFunc("/1.0/auth/token", func(w http.ResponseWriter, r *http.Request) {
 		hit := tokenHits.Add(1)
 		if hit == 2 {
-			// Wait briefly on the 2nd token call to test concurrent singleflight with one canceled caller
+			close(tokenStarted)
 			<-tokenBarrier
 		}
 		_ = json.NewEncoder(w).Encode(TokenInfo{
@@ -98,11 +98,15 @@ func TestAuthRollbackSingleflightAnd401Retry(t *testing.T) {
 	tokens := make([]*TokenInfo, 6)
 
 	cancelCtx, cancel := context.WithCancel(ctx)
+	canceledDone := make(chan struct{})
+	defer cancel()
 	wg.Add(6)
 	go func() {
 		defer wg.Done()
 		tokens[0], errs[0] = client.Auth.EnsureToken(cancelCtx, false)
+		close(canceledDone)
 	}()
+	<-tokenStarted
 	for i := 1; i < 6; i++ {
 		idx := i
 		go func() {
@@ -110,8 +114,8 @@ func TestAuthRollbackSingleflightAnd401Retry(t *testing.T) {
 			tokens[idx], errs[idx] = client.Auth.EnsureToken(ctx, false)
 		}()
 	}
-	time.Sleep(15 * time.Millisecond)
 	cancel() // Cancel caller 0 while singleflight is in-flight!
+	<-canceledDone
 	close(tokenBarrier)
 	wg.Wait()
 

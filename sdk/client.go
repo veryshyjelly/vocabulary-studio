@@ -38,6 +38,10 @@ type Client struct {
 	maxResponseBytes int64
 	logger           *slog.Logger
 	tokenGroup       singleflight.Group
+	// lifecycleMu orders account replacement, token commits, and persistence.
+	// Always acquire it before mu; never hold it over token HTTP requests.
+	lifecycleMu    sync.Mutex
+	authGeneration uint64
 
 	webBaseURL    string
 	apiBaseURL    string
@@ -185,6 +189,8 @@ func (c *Client) ensureTimezoneCookie() {
 
 // RestoreSession loads the persisted SessionSnapshot from the configured SessionStore into memory.
 func (c *Client) RestoreSession(ctx context.Context) error {
+	c.lifecycleMu.Lock()
+	defer c.lifecycleMu.Unlock()
 	if c.sessionStore == nil {
 		return nil
 	}
@@ -192,17 +198,24 @@ func (c *Client) RestoreSession(ctx context.Context) error {
 	if err != nil || snap == nil {
 		return err
 	}
-	c.ImportSession(snap)
+	c.importSessionLocked(snap)
 	return nil
 }
 
 // ImportSession populates the client's CookieJar, GUID, and cached Bearer JWT from a SessionSnapshot.
 // The provided snapshot is deep-copied so subsequent caller mutations cannot affect client state.
 func (c *Client) ImportSession(snap *SessionSnapshot) {
+	c.lifecycleMu.Lock()
+	defer c.lifecycleMu.Unlock()
+	c.importSessionLocked(snap)
+}
+
+func (c *Client) importSessionLocked(snap *SessionSnapshot) {
 	if snap == nil {
 		return
 	}
 	cloned := snap.Clone()
+	c.authGeneration++
 	c.jar.Import(cloned.Cookies, c.clock.Now())
 	c.mu.Lock()
 	c.guid = cloned.GUID
@@ -248,6 +261,12 @@ func (c *Client) ExportSession() *SessionSnapshot {
 
 // FlushSession persists the current session state to the configured SessionStore.
 func (c *Client) FlushSession(ctx context.Context) error {
+	c.lifecycleMu.Lock()
+	defer c.lifecycleMu.Unlock()
+	return c.flushSessionLocked(ctx)
+}
+
+func (c *Client) flushSessionLocked(ctx context.Context) error {
 	if c.sessionStore == nil {
 		return nil
 	}
@@ -264,6 +283,22 @@ func (c *Client) CloseIdleConnections() {
 
 // do executes an HTTP request after waiting on the client rate limiter and applying standard headers.
 func (c *Client) do(req *http.Request) (*http.Response, error) {
+	resp, err := c.doWithHTTPClient(req, c.httpClient)
+	if err != nil {
+		return nil, err
+	}
+	// Capture guid cookie if updated by server.
+	if webU, err := url.Parse(c.webBaseURL); err == nil && webU != nil {
+		if g := c.jar.CookieValue(webU, "guid"); g != "" {
+			c.mu.Lock()
+			c.guid = g
+			c.mu.Unlock()
+		}
+	}
+	return resp, nil
+}
+
+func (c *Client) doWithHTTPClient(req *http.Request, httpClient *http.Client) (*http.Response, error) {
 	if err := req.Context().Err(); err != nil {
 		return nil, err
 	}
@@ -279,19 +314,7 @@ func (c *Client) do(req *http.Request) (*http.Response, error) {
 		slog.String("method", req.Method),
 		slog.String("url", redactURLString(req.URL)),
 	)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	// Capture guid cookie if updated by server.
-	if webU, err := url.Parse(c.webBaseURL); err == nil && webU != nil {
-		if g := c.jar.CookieValue(webU, "guid"); g != "" {
-			c.mu.Lock()
-			c.guid = g
-			c.mu.Unlock()
-		}
-	}
-	return resp, nil
+	return httpClient.Do(req)
 }
 
 func (c *Client) readResponseBody(resp *http.Response) ([]byte, error) {

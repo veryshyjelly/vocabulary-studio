@@ -40,4 +40,8 @@ Dashboard availability and PR validation are evidence-backed production-readines
 
 ## Implementation progress
 
-All nine changes are planned and unimplemented. Start with `prevent-stale-auth-refresh-commit`.
+Implemented and locally validated:
+
+- [prevent-stale-auth-refresh-commit](changes/prevent-stale-auth-refresh-commit/proposal.md)
+
+8 changes remain planned. Completed changes await review, synchronization, and archive.

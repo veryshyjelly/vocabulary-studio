@@ -47,6 +47,15 @@ Land preservation/regression tests with the implementation that satisfies them. 
 
 ## Validation
 
-Run focused tests appropriate to the affected layers and preserve the characterized behavior.
+### Implementation evidence
 
-Run `openspec validate prevent-stale-auth-refresh-commit --strict --no-interactive` before implementation is considered complete.
+- Token acquisition and singleflight keys carry an authentication generation; obsolete results return `ErrSessionExpired` without a token.
+- Lifecycle ordering serializes token commits and session saves with logout, restoration, and imports. Token HTTP work runs outside that lock.
+- Token HTTP clients wrap their cookie jar with the generation check, preventing late response cookies from restoring credentials before body decoding.
+- Independent review strengthened the regressions to inspect exported and saved credential cookies for logout, import, and login transitions. All three fail when the cookie guard is removed in an isolated temporary SDK copy; the guarded regressions pass 20 race-enabled repetitions.
+- Barrier-controlled regressions cover logout, import, successful login during an old refresh, and logout during an in-flight save. The logout regression was verified to fail against the original source in a temporary checkout copy.
+- The authentication regressions and existing rollback/singleflight/401 characterization passed 20 repeated race-enabled runs. Complete SDK and desktop/CLI race suites and SDK `go vet ./...` passed.
+
+cd sdk && CGO_ENABLED=1 go test -race ./...
+
+Also run `openspec validate prevent-stale-auth-refresh-commit --strict --no-interactive` and confirm all tasks are checked only after their verification succeeds.
