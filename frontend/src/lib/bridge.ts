@@ -1,3 +1,4 @@
+// Keep generated service/model paths here so feature views depend on one adapter.
 import { AuthService, DictionaryService, DiscoveryService, ListsService, ProgressService, SettingsService, TrainerService } from "../bindings/github.com/veryshyjelly/vocabulary-studio/internal/desktop/index.js";
 
 export type {
@@ -78,6 +79,7 @@ export function getBridge(): DesktopBridge {
 }
 
 export function setBridgeForTesting(custom: Partial<DesktopBridge>) {
+  // Tests replace only the services they exercise; resetBridge restores real bindings.
   activeBridge = {
     ...activeBridge,
     ...custom,

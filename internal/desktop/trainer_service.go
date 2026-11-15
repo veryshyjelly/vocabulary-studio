@@ -247,6 +247,8 @@ func mapParsedQuestionToDTO(pq *vocab.ParsedQuestion, isEliminated func(string) 
 		sentText = pq.SentenceText
 	}
 	choices := make([]ChoiceDTO, len(pq.Choices))
+	// Answer nonces identify the visible choices. The challenge secret remains
+	// in the backend session and is not part of the question DTO.
 	for i, ch := range pq.Choices {
 		choices[i] = ChoiceDTO{
 			Index:      ch.Index,

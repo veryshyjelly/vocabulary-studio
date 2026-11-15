@@ -35,6 +35,8 @@ func (d *DictionaryService) Lookup(ctx context.Context, word string) (*WordDetai
 
 	d.hub.recordSearchWord(entry.Word)
 
+	// The entry is the required result. Progress and corpus examples enrich it
+	// independently, so their failures do not discard a successful lookup.
 	var (
 		wg       sync.WaitGroup
 		progress *vocab.WordProgressDetail

@@ -20,6 +20,7 @@ export function SessionPersistenceNotice({ account }: { account: AccountStatusDT
     setRetrying(false);
     if (!authenticated || mode === SessionStoreMode.SessionStoreMemory) return;
     const scope: PersistenceScope = { active: true, version: 0, polling: false, retrying: false };
+    // Cleanup retires this account/mode scope even if a local bridge call finishes later.
     scopeRef.current = scope;
     const poll = async () => {
       if (scope.polling || scope.retrying) return;
@@ -27,6 +28,7 @@ export function SessionPersistenceNotice({ account }: { account: AccountStatusDT
       const version = scope.version;
       try {
         const status = await getBridge().auth.GetPersistenceStatus();
+        // Unknown status is not evidence that an earlier failed save recovered.
         if (scope.active && version === scope.version && status && (status.state === "saved" || status.state === "failed")) {
           setState(status.state);
           if (status.state === "saved") setRetryError(false);
@@ -49,6 +51,7 @@ export function SessionPersistenceNotice({ account }: { account: AccountStatusDT
   const retry = async () => {
     const scope = scopeRef.current;
     if (!scope?.active || scope.retrying) return;
+    // A poll begun before this retry must not overwrite the retry's newer result.
     scope.version++;
     scope.retrying = true;
     setRetrying(true);

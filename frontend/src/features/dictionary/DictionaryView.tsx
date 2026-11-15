@@ -76,6 +76,7 @@ export const DictionaryView: React.FC<{
       if (!trimmed) return;
 
       const reqId = ++latestLookupId.current;
+      // Source-filtered examples from the previous word must not replace this lookup.
       ++latestExamplesId.current;
       setExamplesLoading(false);
       setShowSuggestions(false);
@@ -159,6 +160,7 @@ export const DictionaryView: React.FC<{
 
     return () => {
       clearTimeout(timer);
+      // Canceling the debounce cannot stop a bridge request that already started.
       ++latestAutocompleteId.current;
     };
   }, [query, showSuggestions]);

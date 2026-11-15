@@ -136,7 +136,8 @@ func (h *Hub) Emit(name string, data any) {
 }
 
 // BeginOperation cancels any previous in-flight operation with the same key and returns a new derived context.
-// This guarantees stale autocomplete, lookup, or list-loading requests are canceled immediately.
+// Cancellation is cooperative: callers still need to handle a result that was
+// already completing when a newer autocomplete, lookup, or list request started.
 func (h *Hub) BeginOperation(parent context.Context, key string, timeout time.Duration) (context.Context, context.CancelFunc) {
 	if parent == nil {
 		parent = context.Background()
@@ -166,7 +167,7 @@ func (h *Hub) CancelOperation(key string) {
 	h.opMu.Unlock()
 }
 
-// Shutdown cancels all in-flight operations, flushes preferences, and closes idle HTTP connections.
+// Shutdown cancels tracked operations and closes idle HTTP connections.
 func (h *Hub) Shutdown() {
 	h.opMu.Lock()
 	for k, cancel := range h.opCancels {
@@ -235,6 +236,8 @@ func (h *Hub) savePreferencesLocked() error {
 		return err
 	}
 	path := h.preferencesPath()
+	// Keep the temporary file beside its destination so the final rename replaces
+	// the preference document without exposing a partially written JSON file.
 	tmp, err := os.CreateTemp(h.configDir, ".prefs-*.tmp")
 	if err != nil {
 		return err
@@ -308,6 +311,8 @@ func (h *Hub) SwitchSessionStoreMode(ctx context.Context, newMode SessionStoreMo
 	}
 
 	newStore := h.buildSessionStore(newMode)
+	// Reusing the client keeps existing trainer sessions on the selected store
+	// and preserves the shared authentication, transport, and pacing state.
 	if err := client.SetSessionStore(ctx, newStore); err != nil {
 		return fmt.Errorf("vocab: failed to persist session to %s store: %w", newMode, err)
 	}

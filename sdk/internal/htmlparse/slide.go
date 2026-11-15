@@ -65,6 +65,8 @@ func DecodeAndParseSlide(base64Code, fallbackType string) (*SlideData, error) {
 }
 
 // ParseSlideHTML parses a decoded HTML slide from Challenge/VocabTrainer (`question.code`) or Quiz (`qs`).
+// HTML fields preserve upstream markup and are not sanitized for UI rendering;
+// consumers must apply their own rendering trust boundary.
 func ParseSlideHTML(rawHTML, fallbackType string) (*SlideData, error) {
 	if strings.TrimSpace(rawHTML) == "" {
 		return nil, fmt.Errorf("htmlparse: empty slide HTML")

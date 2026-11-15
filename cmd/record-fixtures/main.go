@@ -141,6 +141,8 @@ func scrubSensitiveDataHook(i *cassette.Interaction) error {
 		i.Response.Headers["Set-Cookie"] = []string{"REDACTED"}
 	}
 	if i.Request.Form != nil {
+		// Cassettes retain parsed form values as well as the raw body; redacting
+		// one representation does not remove credentials from the other.
 		for _, field := range []string{"password", "username", "refresh_token"} {
 			if _, ok := i.Request.Form[field]; ok {
 				i.Request.Form[field] = []string{"REDACTED"}
@@ -154,7 +156,8 @@ func scrubSensitiveDataHook(i *cassette.Interaction) error {
 		i.Request.Body = "REDACTED"
 	}
 
-	// Scrub sensitive tokens/identifiers inside JSON response bodies (/1.0/auth/token, /auth/me.json).
+	// Scrub known token/profile fields without replacing the surrounding JSON
+	// shape, so replay tests still exercise the SDK's normal response decoding.
 	trimmedBody := strings.TrimSpace(i.Response.Body)
 	if strings.HasPrefix(trimmedBody, "{") && strings.HasSuffix(trimmedBody, "}") {
 		var m map[string]any

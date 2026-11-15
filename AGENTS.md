@@ -26,13 +26,15 @@ Use the Go version declared in `go.mod` (currently `1.27.3`), Bun, and Wails v3.
 
 Format Go with `gofmt`; use tab indentation, exported PascalCase names, and package-private camelCase names. Keep the SDK independent of desktop dependencies. Follow existing TypeScript formatting: two spaces, double quotes, semicolons, PascalCase components, and camelCase functions. Regenerate Wails bindings after service changes rather than editing generated files.
 
+Add concise comments for non-obvious behavior: protocol constraints, ownership and locking invariants, asynchronous result ordering, security boundaries, and reasons for surprising choices. Keep comments accurate as code changes. Avoid restating straightforward code, speculative guarantees, and comments that obscure unresolved defects.
+
 ## Testing Guidelines
 
 Use Go's `testing` package with `*_test.go` files and `TestName` functions. Prefer `httptest`, replayed cassettes, and fake clocks for deterministic offline tests. Frontend tests use `*.test.tsx`, Vitest, React Testing Library, and jsdom. Cover changed behavior and failure paths; no numeric coverage threshold is configured.
 
 ## Commit & Pull Request Guidelines
 
-Use concise imperative subjects. PRs should explain behavior changes, list validation commands and results, link relevant issues, and include screenshots for UI changes.
+Use concise imperative commit subjects. Commit each completed, validated bounded change with its tests and corresponding OpenSpec records; keep unrelated changes separate and report the commit IDs. Maintain this practice for subsequent work. Preserve existing history and do not push unless requested. PRs should explain behavior changes, list validation commands and results, link relevant issues, and include screenshots for UI changes.
 
 ## Security & Configuration
 

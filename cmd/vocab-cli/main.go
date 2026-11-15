@@ -109,6 +109,8 @@ func run(ctx context.Context, rawArgs []string, stdin io.Reader, stdout, stderr 
 			fmt.Fprintf(stdout, "Logged in as %s (uid=%s, level=%s, points=%d, fullVocabTrainer=%v)\n",
 				me.Auth.Nickname, me.Auth.UID, me.Level.Name, me.Points, me.Perms.FullVocabTrainer)
 		}
+		// Authentication can succeed without durable storage. Keep account output
+		// usable (including JSON), but let scripts detect the failed save by exit code.
 		if client.PersistenceStatus().State == "failed" {
 			fmt.Fprintln(stderr, "warning: signed in, but the session could not be saved. Check session storage and sign in again to retry.")
 			return 1

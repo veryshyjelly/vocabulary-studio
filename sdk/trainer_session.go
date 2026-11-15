@@ -30,6 +30,8 @@ const (
 //
 // TrainerSession serializes turn operations and is safe for concurrent use.
 type TrainerSession struct {
+	// opMu spans request IO; mu protects short state accesses so getters can
+	// still inspect the session while a turn operation is waiting upstream.
 	opMu             sync.Mutex // Serializes state-mutating operations (ChooseIndex, Spell, Hint, Next)
 	mu               sync.RWMutex
 	service          *TrainerService
@@ -283,6 +285,7 @@ func (s *TrainerSession) ChooseIndex(ctx context.Context, choiceIndex int) (*Ans
 	localOut.EvaluatedLocally = true
 	localOut.Correct = isCorrect
 	localOut.UserChoice = choiceIndex
+	// Cached rewards belong to the server-saved first attempt, not this retry.
 	localOut.Points = 0
 	localOut.Bonus = 0
 	localOut.Achievements = nil
@@ -402,6 +405,7 @@ func (s *TrainerSession) Spell(ctx context.Context, rawGuess string) (*AnswerOut
 	localOut.Attempt = tryNum
 	localOut.EvaluatedLocally = true
 	localOut.Correct = isCorrect
+	// Cached rewards belong to the server-saved first attempt, not this retry.
 	localOut.Points = 0
 	localOut.Bonus = 0
 	localOut.Achievements = nil

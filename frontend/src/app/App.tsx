@@ -162,6 +162,7 @@ export const App: React.FC = () => {
       return;
     }
     navigate("dictionary");
+    // A new token repeats focus on the same route without changing the lookup word.
     setSearchFocusToken((t) => t + 1);
   }, [navigate]);
 

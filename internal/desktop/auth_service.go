@@ -17,6 +17,8 @@ type AuthService struct {
 
 // GetPersistenceStatus reads local save health without account verification or IO.
 func (s *AuthService) GetPersistenceStatus() *SessionPersistenceStatusDTO {
+	// Polling save health must not trigger /auth/me or token refresh, which can
+	// themselves attempt persistence and change the status being observed.
 	return &SessionPersistenceStatusDTO{State: s.hub.Client().PersistenceStatus().State}
 }
 
@@ -119,6 +121,8 @@ func (s *AuthService) mapLoginData(me *vocab.LoginData) *AccountStatusDTO {
 	mode := s.hub.prefs.SessionStoreMode
 	s.hub.mu.RUnlock()
 
+	// Select display fields explicitly instead of returning LoginData: its GUID
+	// can refresh authentication and must remain on the SDK side of the bridge.
 	return &AccountStatusDTO{
 		Authenticated:    me.ValidUser && me.Auth.LoggedIn,
 		ValidUser:        me.ValidUser,

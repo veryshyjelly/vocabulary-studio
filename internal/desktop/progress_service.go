@@ -27,6 +27,8 @@ func (p *ProgressService) GetHomeDashboard(ctx context.Context) (*HomeDashboardD
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	// Each optional section is filled independently. The shared mutex protects
+	// writes to the aggregate; Wait keeps its response stable before returning it.
 
 	// 1. Check auth status
 	me, authErr := client.Auth.Me(ctx)

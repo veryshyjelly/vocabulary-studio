@@ -28,6 +28,7 @@ export const AudioButton: React.FC<{
   );
 
   const handlePlay = async (e: React.MouseEvent) => {
+    // Listening must not also activate an enclosing word/list card click handler.
     e.stopPropagation();
     if (playing) return;
     setFailed(false);

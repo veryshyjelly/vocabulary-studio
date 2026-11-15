@@ -17,6 +17,8 @@ func main() {
 
 	var app *application.App
 
+	// The Hub is constructed before Wails, so the callback resolves app only
+	// when an event is emitted rather than capturing an uninitialized emitter.
 	hub, err := desktop.NewHub(desktop.HubOptions{
 		EmitEvent: func(name string, data any) {
 			if app != nil && app.Event != nil {

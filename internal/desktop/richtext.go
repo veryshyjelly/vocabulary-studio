@@ -23,6 +23,7 @@ func ParseSafeRichSpans(rawHTML string) (plainText string, spans []RichSpan) {
 	}
 	doc, err := html.Parse(strings.NewReader(trimmed))
 	if err != nil {
+		// Even the fallback is text, never an HTML fragment for the UI to inject.
 		return trimmed, []RichSpan{{Text: trimmed}}
 	}
 
@@ -32,6 +33,8 @@ func ParseSafeRichSpans(rawHTML string) (plainText string, spans []RichSpan) {
 		if n.Type == html.ElementNode {
 			tag := strings.ToLower(n.Data)
 			if tag == "script" || tag == "style" || tag == "noscript" {
+				// Drop the subtree, not just the tag, so executable/style source
+				// does not become visible text in a definition or practice prompt.
 				return
 			}
 			switch tag {
@@ -42,6 +45,8 @@ func ParseSafeRichSpans(rawHTML string) (plainText string, spans []RichSpan) {
 			}
 		}
 		if n.Type == html.TextNode {
+			// Only text and inherited emphasis cross the bridge; element names
+			// and attributes (including event handlers and links) are not copied.
 			txt := n.Data
 			if txt != "" {
 				rawSpans = append(rawSpans, RichSpan{

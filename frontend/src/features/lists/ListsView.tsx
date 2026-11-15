@@ -54,7 +54,9 @@ export const ListsView: React.FC<{
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  // Overview requests must not clear the busy state of a pending detail request.
   const isLoading = loading || detailLoading;
+  // Two signed-in accounts still have different owners for private enrichment.
   const accountKey = `${Boolean(account?.authenticated)}:${account?.uid || ""}`;
   const detailRequest = useRef(0);
   const detailAccount = useRef<string | null>(accountKey);
@@ -113,6 +115,7 @@ export const ListsView: React.FC<{
     async (listId: number) => {
       if (!listId || listId <= 0 || detailAccount.current !== accountKey) return;
       const request = ++detailRequest.current;
+      // Apply the same ownership check to success, failure, and loading cleanup.
       const isCurrent = () => request === detailRequest.current && detailAccount.current === accountKey;
       setDetailLoading(true);
       setError(null);
@@ -178,6 +181,7 @@ export const ListsView: React.FC<{
     const words = flashcards?.wordlist?.words || [];
     const onKeyDown = (e: KeyboardEvent) => {
       if (!acceptsPlainShortcut(e) || words.length === 0) return;
+      // Focused buttons already turn Space/Enter into clicks; avoid flipping twice.
       if ((e.key === " " || e.key === "Enter") && (e.target as HTMLElement)?.closest("button")) return;
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();

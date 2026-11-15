@@ -6,6 +6,7 @@ import { cx } from "../ui";
 
 /**
  * RichText safely renders structured RichSpan[] without ever using dangerouslySetInnerHTML.
+ * Span text and fallback strings stay React text nodes, including literal HTML characters.
  * `emphasis="word"` renders bold spans (the target vocabulary word) in the word typeface.
  */
 export const RichText: React.FC<{

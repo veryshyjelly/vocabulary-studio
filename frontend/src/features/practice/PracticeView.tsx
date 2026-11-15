@@ -182,6 +182,7 @@ export const PracticeView: React.FC<{
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.isComposing || e.metaKey || e.ctrlKey || e.altKey || isModalOpen()) return;
       const isCompleted = sessionState.session_state === "question_completed";
+      // A completed spelling field is disabled; Enter can still advance from it.
       const canAdvance = acceptsPlainShortcut(e) ||
         (e.target instanceof HTMLInputElement && e.target.disabled && !e.defaultPrevented && !e.repeat);
 

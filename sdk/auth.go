@@ -387,6 +387,8 @@ func (a *AuthService) EnsureToken(ctx context.Context, forceRefresh bool) (*Toke
 	return a.ensureToken(ctx, forceRefresh, nil)
 }
 
+// expectedGeneration binds a login's follow-up refresh to the account it just
+// installed; public EnsureToken callers acquire work for the current account.
 func (a *AuthService) ensureToken(ctx context.Context, forceRefresh bool, expectedGeneration *uint64) (*TokenInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -512,6 +514,8 @@ func (a *AuthService) fetchToken(ctx context.Context, forceRefresh bool, generat
 	// Subtract 10 seconds safety margin just like vcom/api in module-zcv3kc.js.
 	tok.ExpiresAt = a.client.clock.Now().Add(time.Duration(expiresSec)*time.Second - 10*time.Second)
 
+	// Commit and save share one lifecycle critical section so logout cannot
+	// clear the store between installing a token and persisting that token.
 	a.client.lifecycleMu.Lock()
 	defer a.client.lifecycleMu.Unlock()
 	if generation != a.client.authGeneration {

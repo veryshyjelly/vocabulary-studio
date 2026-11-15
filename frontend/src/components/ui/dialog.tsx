@@ -22,6 +22,7 @@ export const Dialog: React.FC<{
   const panelRef = useRef<HTMLDivElement | null>(null);
   const openerRef = useRef<HTMLElement | null>(null);
   const wasOpen = useRef(false);
+  // Update the close callback without rerunning focus setup on each parent render.
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   // Captured during render: child autoFocus moves focus before any effect runs.
@@ -69,6 +70,7 @@ export const Dialog: React.FC<{
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
       if (appRoot) appRoot.inert = wasInert;
+      // Navigation can remove the opener while the dialog is open.
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
   }, [open]);

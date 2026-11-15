@@ -138,6 +138,8 @@ func (p *PacingGuard) ReserveTrainerSlot(ctx context.Context) (commit func(), re
 					p.mu.Lock()
 					defer p.mu.Unlock()
 					p.removeReservationLocked(resID)
+					// Start the completed-answer window here; a slow request must
+					// not consume most of its window while still in flight.
 					p.answerTimestamps = append(p.answerTimestamps, p.clock.Now())
 				})
 			}
