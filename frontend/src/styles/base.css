@@ -3,6 +3,11 @@
 /* ------------------------------------------------------------------ */
 
 @layer base {
+  /* Keep trackpad scrolling from rubber-banding at any scroll boundary. */
+  * {
+    overscroll-behavior: none;
+  }
+
   html,
   body,
   #root {
