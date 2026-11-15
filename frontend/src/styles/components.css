@@ -1,4 +1,7 @@
 @layer components {
+  .window-drag-region {
+    --wails-draggable: drag;
+  }
   .page-content {
     padding: 2rem var(--space-page) 3.5rem;
   }

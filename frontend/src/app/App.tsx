@@ -7,6 +7,7 @@ import { SessionPersistenceNotice } from "../features/auth/SessionPersistenceNot
 import { ShortcutsDialog } from "../components/Shortcuts";
 import { Kbd, ToastProvider, cx } from "../components/ui";
 import { acceptsPlainShortcut, isModalOpen, modKeyLabel } from "../lib/keys";
+import { usesMacWindowChrome } from "../lib/windowChrome";
 import { HomeView } from "../features/home/HomeView";
 import { PracticeView } from "../features/practice/PracticeView";
 import { DictionaryView } from "../features/dictionary/DictionaryView";
@@ -221,16 +222,23 @@ export const App: React.FC = () => {
   };
 
   const nickname = account?.nickname || "Learner";
+  const hasMacWindowChrome = usesMacWindowChrome();
 
   return (
     <ToastProvider>
-      <div className="h-screen flex overflow-hidden bg-canvas text-ink">
+      <div className={cx("relative h-screen flex overflow-hidden bg-canvas text-ink", hasMacWindowChrome && "pt-12")}>
         <a
           href="#main"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:px-3 focus:py-2 focus:rounded-control focus:bg-raised focus:shadow-pop focus:text-ui"
+          className={cx("sr-only focus:not-sr-only focus:fixed focus:left-3 focus:z-[70] focus:px-3 focus:py-2 focus:rounded-control focus:bg-raised focus:shadow-pop focus:text-ui", hasMacWindowChrome ? "focus:top-12" : "focus:top-3")}
         >
           Skip to content
         </a>
+        {hasMacWindowChrome && (
+          // Native controls sit above this blank strip; interactive content stays below it.
+          <div className="window-drag-region absolute inset-x-0 top-0 flex h-12 select-none" aria-hidden="true">
+            <div className="w-24 wide:w-56 shrink-0 border-r border-line bg-sunken/70" />
+          </div>
+        )}
 
         {/* Navigation sidebar: icon rail below the "wide" breakpoint */}
         <aside className="w-24 wide:w-56 shrink-0 border-r border-line bg-sunken/70 flex flex-col select-none transition-[width] duration-200 ease-out-soft">

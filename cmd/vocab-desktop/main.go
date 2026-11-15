@@ -66,6 +66,10 @@ func main() {
 		MinHeight:        640,
 		BackgroundColour: application.NewRGB(250, 249, 245),
 		URL:              "/",
+		Mac: application.MacWindow{
+			// Draw the themed web content behind the native traffic lights.
+			TitleBar: application.MacTitleBarHiddenInset,
+		},
 	})
 	window.Center()
 	window.Show()
