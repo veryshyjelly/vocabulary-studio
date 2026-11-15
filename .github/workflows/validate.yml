@@ -1,0 +1,53 @@
+name: Validate pull requests
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Project validation
+    runs-on: macos-15
+    timeout-minutes: 30
+    env:
+      OPENSPEC_TELEMETRY: "0"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            sdk/go.sum
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.2"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          package-manager-cache: false
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: bun install --frozen-lockfile
+      - name: Check frontend types, build, and tests
+        working-directory: frontend
+        run: |
+          bun run typecheck --noUnusedLocals
+          bun run build
+          bun run test
+      - name: Test standalone SDK
+        run: make test-sdk
+      - name: Test desktop services and CLI
+        run: make test-desktop
+      - name: Install OpenSpec CLI
+        run: npm install --global @fission-ai/openspec@1.16.1
+      - name: Validate OpenSpec artifacts
+        run: openspec validate --all --strict --no-interactive

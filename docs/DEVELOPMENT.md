@@ -102,6 +102,34 @@ go build -o bin/vocab-desktop ./cmd/vocab-desktop
 ```
 
 ## Tests and static analysis
+
+Pull requests run the **Validate pull requests / Project validation** GitHub
+Actions check from `.github/workflows/validate.yml`. It uses the existing
+`macos-15` environment, the Go version in `go.mod`, Bun `1.4.2`, Node.js `22`,
+and OpenSpec CLI `1.16.1`. It installs locked frontend dependencies, checks types,
+builds and tests the frontend, tests the SDK and desktop/CLI packages separately,
+and validates all OpenSpec artifacts strictly. No Vocabulary.com credentials or
+release secrets are required. The checkout does not persist its token.
+
+The release workflow remains separate. Adding the PR workflow does not configure
+branch protection or make its check required. After pushing this workflow in a
+PR, inspect its first run in GitHub Actions before treating CI as operational.
+Equivalent local commands are:
+
+```bash
+cd frontend
+bun install --frozen-lockfile
+bun run typecheck --noUnusedLocals
+bun run build
+bun run test
+cd ..
+make test-sdk test-desktop
+openspec validate --all --strict --no-interactive
+```
+
+Install the matching OpenSpec CLI when needed with
+`npm install --global @fission-ai/openspec@1.16.1`.
+
 ```bash
 # Run every module and the frontend (installs locked frontend dependencies)
 make test

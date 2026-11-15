@@ -46,6 +46,15 @@ Land preservation/regression tests with the implementation that satisfies them. 
 
 ## Validation
 
-Run focused tests appropriate to the affected layers and preserve the characterized behavior.
+### Implementation evidence
 
-Run `openspec validate validate-pull-requests --strict --no-interactive` before implementation is considered complete.
+- `.github/workflows/validate.yml` adds `Validate pull requests / Project validation` on `pull_request`, with `contents: read`, no release secrets, and checkout credential persistence disabled. The release workflow is unchanged.
+- The runner/tool setup reuses `macos-15`, `actions/setup-go@v6` with `go.mod`, and Bun `1.4.2`. Node.js `22` is explicit for the OpenSpec CLI; `@fission-ai/openspec@1.16.1` is pinned. Automatic npm package-manager caching is disabled because the frontend uses Bun.
+- Local frozen Bun installation, frontend typecheck with unused-local checks, production build, and 25 frontend tests passed. Standalone SDK and desktop/CLI/fixture-recorder tests passed with CGO disabled. Sandbox port restrictions required the Go tests to run outside the sandbox.
+- Ruby Psych parsed both workflow YAML files; structural checks verified the PR-only event, read-only permissions, runner, checkout credential setting, OpenSpec pin, and absence of secret references. `git diff --check` and strict validation of all 18 OpenSpec items passed.
+- Local tool versions were Go `1.27.4`, Bun `1.4.2`, Node.js `26.13.1`, and OpenSpec `1.16.1`; CI selects Go from `go.mod` and Node.js `22`. Local command success does not substitute for verification on that hosted environment.
+- No first PR run is available for this uncommitted workflow. Inspect that run after the workflow is pushed in a PR before declaring CI operational. No PR was created or branch protection changed by this work.
+
+Workflow syntax and wired commands; first PR run when GitHub execution is available
+
+Also run `openspec validate validate-pull-requests --strict --no-interactive` and confirm all tasks are checked only after their verification succeeds.

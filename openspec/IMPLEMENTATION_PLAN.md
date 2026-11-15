@@ -45,5 +45,6 @@ Implemented and locally validated:
 - [prevent-stale-auth-refresh-commit](changes/prevent-stale-auth-refresh-commit/proposal.md)
 - [preserve-session-owner-on-store-switch](changes/preserve-session-owner-on-store-switch/proposal.md)
 - [scope-list-progress-to-selected-list](changes/scope-list-progress-to-selected-list/proposal.md)
+- [validate-pull-requests](changes/validate-pull-requests/proposal.md)
 
-6 changes remain planned. Completed changes await review, synchronization, and archive.
+5 changes remain planned. Completed changes await review, synchronization, and archive.
