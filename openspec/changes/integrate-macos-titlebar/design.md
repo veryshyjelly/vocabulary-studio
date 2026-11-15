@@ -33,4 +33,4 @@ Frontend type checks, production build, and all 40 tests pass, including four ne
 
 A separate temporary preview bundle with its own identity visibly displayed themed top regions in both light and dark appearances, without the old gray strip or centered title. Native controls were visible and separated from the brand/content; native fullscreen entry and exit worked. The installed application's active practice was not restarted.
 
-Dragging remains a manual verification item: the computer-use drag API repeatedly returned `noWindowsAvailable` despite successful native window observation and other interactions. The implementation uses Wails' documented CSS drag region and retains the native frame; the unavailable gesture check is not recorded as a pass.
+The computer-use drag API returned `noWindowsAvailable`, so dragging was initially left for manual verification. The user subsequently confirmed that manual window dragging works, completing the remaining native verification check. This confirmation is user-supplied evidence, not an automated gesture-test result.
