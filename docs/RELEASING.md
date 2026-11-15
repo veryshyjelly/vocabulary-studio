@@ -58,6 +58,7 @@ After the cask is published, validate it through the registered tap:
 
 ```sh
 brew tap veryshyjelly/tap
+brew trust --cask veryshyjelly/tap/vocabulary-studio # Homebrew 7 and newer
 brew audit --cask --online veryshyjelly/tap/vocabulary-studio
 ```
 
