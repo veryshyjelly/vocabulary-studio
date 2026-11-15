@@ -331,6 +331,12 @@ export const PracticeView: React.FC<{
   };
 
   const q = sessionState?.question;
+  const instructionText = q?.instructions_spans?.length
+    ? q.instructions_spans.map((span) => span.text).join("")
+    : q?.instructions_text || "";
+  // Image-choice slides can carry the word separately from their instructions.
+  const showImageTargetWord = q?.is_image_grid && q.target_word &&
+    !instructionText.toLowerCase().includes(q.target_word.toLowerCase());
   const feedback = sessionState?.last_feedback;
   const isCompleted = sessionState?.session_state === "question_completed";
   const isTrialOver = sessionState?.session_state === "trial_over";
@@ -531,6 +537,9 @@ export const PracticeView: React.FC<{
                         : `Select the best match for ${q.target_word || "this word"}:`)
                     }
                   />
+                  {showImageTargetWord && (
+                    <strong className="block mt-2 font-word font-semibold">{q.target_word}</strong>
+                  )}
                 </h2>
 
                 {/* Lifeline results */}

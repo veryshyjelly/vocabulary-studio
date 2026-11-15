@@ -308,6 +308,38 @@ describe("Vocabulary Studio Desktop Frontend", () => {
     expect(await screen.findByRole("heading", { name: /Session Storage Security/i })).toBeInTheDocument();
   });
 
+  it.each([
+    { instructions: "choose the best picture for", spans: undefined },
+    { instructions: "choose the best picture for", spans: [{ text: "choose the best picture for" }] },
+    { instructions: "choose the best picture for garret", spans: [{ text: "choose the best picture for " }, { text: "garret", bold: true }] },
+  ])("shows the visual-match target word once in the question heading ($instructions)", async ({ instructions, spans }) => {
+    const user = userEvent.setup();
+    const session = createMockQuestionSlide(false);
+    session.question = {
+      ...session.question!,
+      type: "I",
+      type_label: "Visual Match (4 Images)",
+      is_image_grid: true,
+      target_word: "garret",
+      instructions_text: instructions,
+      instructions_spans: spans,
+      sentence_text: "",
+      sentence_spans: [],
+      choices: Array.from({ length: 4 }, (_, index) => ({
+        index,
+        nonce: `image-${index}`,
+        image_url: `https://cdn.vocabulary.com/q${index}.jpg`,
+      })),
+    };
+    vi.mocked(getBridge().trainer.StartSession).mockResolvedValue(session);
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: /^Practice$/i }));
+
+    const heading = await screen.findByRole("heading", { name: /choose the best picture for\s+garret/i });
+    expect(heading.textContent?.match(/garret/g)).toHaveLength(1);
+    expect(screen.getByRole("group", { name: "Image answer choices" })).toBeInTheDocument();
+  });
+
   it("handles lifeline hints, 4-image visual questions, error retry states, and Progress/Settings flows", async () => {
     const user = userEvent.setup();
 
