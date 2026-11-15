@@ -153,11 +153,28 @@ func (a *AuthService) Login(ctx context.Context, username, password string) (*Lo
 		return nil, ErrInvalidCredentials
 	}
 
+	a.client.lifecycleMu.Lock()
 	prevSnap := a.client.ExportSession()
+	prevGeneration := a.client.authGeneration
+	a.client.lifecycleMu.Unlock()
 	restoreOnFailure := func() {
+		a.client.lifecycleMu.Lock()
+		defer a.client.lifecycleMu.Unlock()
+		if prevGeneration != a.client.authGeneration {
+			return
+		}
+		// Keep the latest save result for this account, including a failure
+		// that occurred while the credentials request was pending.
+		a.client.mu.RLock()
+		persistenceState := a.client.persistenceState
+		a.client.mu.RUnlock()
 		_ = a.client.jar.Reset()
-		a.client.ImportSession(prevSnap)
+		a.client.importSessionLocked(prevSnap)
+		a.client.mu.Lock()
+		a.client.persistenceState = persistenceState
+		a.client.mu.Unlock()
 	}
+
 	form := url.Values{
 		"username":      {username},
 		"password":      {password},
@@ -214,11 +231,28 @@ func (a *AuthService) LoginVocabTrainer(ctx context.Context, username, password 
 		return nil, ErrInvalidCredentials
 	}
 
+	a.client.lifecycleMu.Lock()
 	prevSnap := a.client.ExportSession()
+	prevGeneration := a.client.authGeneration
+	a.client.lifecycleMu.Unlock()
 	restoreOnFailure := func() {
+		a.client.lifecycleMu.Lock()
+		defer a.client.lifecycleMu.Unlock()
+		if prevGeneration != a.client.authGeneration {
+			return
+		}
+		// Keep the latest save result for this account, including a failure
+		// that occurred while the credentials request was pending.
+		a.client.mu.RLock()
+		persistenceState := a.client.persistenceState
+		a.client.mu.RUnlock()
 		_ = a.client.jar.Reset()
-		a.client.ImportSession(prevSnap)
+		a.client.importSessionLocked(prevSnap)
+		a.client.mu.Lock()
+		a.client.persistenceState = persistenceState
+		a.client.mu.Unlock()
 	}
+
 	form := url.Values{
 		"username":  {username},
 		"password":  {password},
@@ -274,6 +308,7 @@ func (a *AuthService) LoginVocabTrainer(ctx context.Context, username, password 
 func (a *AuthService) commitAuthenticatedUser(ctx context.Context, username string, me *LoginData) {
 	a.client.lifecycleMu.Lock()
 	a.client.authGeneration++
+	generation := a.client.authGeneration
 	a.client.mu.Lock()
 	a.client.username = username
 	if me.GUID != "" {
@@ -283,12 +318,17 @@ func (a *AuthService) commitAuthenticatedUser(ctx context.Context, username stri
 		a.client.userUID = me.Auth.UID
 	}
 	a.client.token = nil
+	a.client.persistenceState = "unknown"
 	a.client.mu.Unlock()
 	a.client.lifecycleMu.Unlock()
 
 	// Exchange the user's GUID for an authenticated Bearer JWT on api.vocabulary.com.
-	_, _ = a.EnsureToken(ctx, true)
-	_ = a.client.FlushSession(ctx)
+	_, _ = a.ensureToken(ctx, true, &generation)
+	a.client.lifecycleMu.Lock()
+	defer a.client.lifecycleMu.Unlock()
+	if generation == a.client.authGeneration {
+		_ = a.client.flushSessionLocked(ctx)
+	}
 }
 
 // Me fetches the current session and subscription status from POST /auth/me.json.
@@ -321,6 +361,7 @@ func (a *AuthService) Logout(ctx context.Context) error {
 	a.client.userUID = ""
 	a.client.username = ""
 	a.client.token = nil
+	a.client.persistenceState = "unknown"
 	a.client.mu.Unlock()
 	_ = a.client.jar.Reset()
 	a.client.ensureTimezoneCookie()
@@ -343,10 +384,18 @@ func (a *AuthService) InvalidateToken() {
 // EnsureToken uses singleflight.DoChan so that if one concurrent caller cancels its context,
 // other concurrent callers waiting on the same token refresh are not aborted.
 func (a *AuthService) EnsureToken(ctx context.Context, forceRefresh bool) (*TokenInfo, error) {
+	return a.ensureToken(ctx, forceRefresh, nil)
+}
+
+func (a *AuthService) ensureToken(ctx context.Context, forceRefresh bool, expectedGeneration *uint64) (*TokenInfo, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 	a.client.lifecycleMu.Lock()
+	if expectedGeneration != nil && *expectedGeneration != a.client.authGeneration {
+		a.client.lifecycleMu.Unlock()
+		return nil, ErrSessionExpired
+	}
 	generation := a.client.authGeneration
 	if !forceRefresh {
 		if tok := a.validCachedToken(); tok != nil {

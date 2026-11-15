@@ -12,6 +12,7 @@ const account = {
   authenticated: scenario !== "auth", valid_user: true, uid: "fixture-learner", nickname: "Sample learner",
   points: 1250, level: { name: "Wordsmith", id: "L04", milestone: 1, progress: 0.4 },
   full_vocab_trainer: true, session_store_mode: SessionStoreMode.SessionStoreMemory,
+  persistence_state: "saved",
 };
 let preferences = {
   theme: params.get("theme") || "light", pronunciation_accent: "US", default_view: params.get("screen") || "practice",

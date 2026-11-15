@@ -2,6 +2,7 @@ package desktop
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -12,6 +13,22 @@ import (
 // It never returns passwords, cookies, GUIDs, or JWTs.
 type AuthService struct {
 	hub *Hub
+}
+
+// GetPersistenceStatus reads local save health without account verification or IO.
+func (s *AuthService) GetPersistenceStatus() *SessionPersistenceStatusDTO {
+	return &SessionPersistenceStatusDTO{State: s.hub.Client().PersistenceStatus().State}
+}
+
+// RetryPersistence retries saving to the selected backend without signing in again.
+func (s *AuthService) RetryPersistence(ctx context.Context) (*SessionPersistenceStatusDTO, error) {
+	ctx, cancel := s.hub.BeginOperation(ctx, "auth:persistence", 15*time.Second)
+	defer cancel()
+	if err := s.hub.Client().FlushSession(ctx); err != nil {
+		// Store errors may include paths or credential-bearing backend payloads.
+		return nil, errors.New("Your session could not be saved. Retry saving or choose another session storage option in Settings.")
+	}
+	return s.GetPersistenceStatus(), nil
 }
 
 // GetStatus checks the current session via POST /auth/me.json and returns non-sensitive account info.
@@ -89,6 +106,7 @@ func (s *AuthService) unauthenticatedStatus() *AccountStatusDTO {
 		Authenticated:    false,
 		ValidUser:        false,
 		SessionStoreMode: mode,
+		PersistenceState: s.hub.Client().PersistenceStatus().State,
 		Level:            vocab.UserLevel{ID: "L01", Name: "Novice"},
 	}
 }
@@ -114,6 +132,7 @@ func (s *AuthService) mapLoginData(me *vocab.LoginData) *AccountStatusDTO {
 		Paid:             me.Paid,
 		FullVocabTrainer: me.Perms.FullVocabTrainer,
 		SessionStoreMode: mode,
+		PersistenceState: s.hub.Client().PersistenceStatus().State,
 		Bowl:             me.Bowl,
 	}
 }

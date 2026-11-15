@@ -19,5 +19,11 @@ type AccountStatusDTO struct {
 	Paid             bool              `json:"paid"`
 	FullVocabTrainer bool              `json:"full_vocab_trainer"`
 	SessionStoreMode SessionStoreMode  `json:"session_store_mode"`
+	PersistenceState string            `json:"persistence_state"`
 	Bowl             *vocab.BowlSeason `json:"bowl,omitempty"`
+}
+
+// SessionPersistenceStatusDTO reports save health without backend error details.
+type SessionPersistenceStatusDTO struct {
+	State string `json:"state"`
 }

@@ -157,6 +157,14 @@ cd frontend && bun run test
 
 ## CLI usage
 
+Explicit `login` reports authentication and persistence separately. If sign-in
+succeeds but the session file cannot be saved, it prints a generic warning to
+stderr and exits with status `1`; it does not claim the session was saved. Check
+the selected session path and sign in again to retry. With `--json`, stdout
+remains a valid account JSON document even on this persistence failure. The
+`login` and `me` JSON account output omits the credential-bearing `guid` field;
+other profile fields are preserved.
+
 Copy `.env.example` to `.env.local` (gitignored) and set `VOCAB_USERNAME` and `VOCAB_PASSWORD`, then run:
 
 ```bash

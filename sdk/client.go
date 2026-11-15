@@ -22,6 +22,12 @@ import (
 
 var linkHeaderPartRegex = regexp.MustCompile(`<([^>]+)>;\s*rel="([^"]+)"`)
 
+// SessionPersistenceStatus describes whether the current session was saved by
+// its selected backend. It deliberately excludes backend errors and credentials.
+type SessionPersistenceStatus struct {
+	State string `json:"state"`
+}
+
 // Client is the top-level Vocabulary.com SDK client.
 // It manages dual-tier authentication (web session cookies + Bearer JWT), rate limiting,
 // gameplay pacing guards, and provides sub-services for Auth, Trainer, Lists, Dictionary, Progress, Bee, and Quiz.
@@ -51,11 +57,12 @@ type Client struct {
 	userAgent     string
 	timezone      string
 
-	mu       sync.RWMutex
-	guid     string
-	userUID  string
-	username string
-	token    *TokenInfo
+	mu               sync.RWMutex
+	guid             string
+	userUID          string
+	username         string
+	token            *TokenInfo
+	persistenceState string // Guarded by mu; empty means unknown.
 
 	Auth       *AuthService
 	Trainer    *TrainerService
@@ -225,6 +232,7 @@ func (c *Client) importSessionLocked(snap *SessionSnapshot) {
 		c.timezone = cloned.Timezone
 	}
 	c.token = cloned.Token
+	c.persistenceState = "unknown"
 	c.mu.Unlock()
 	c.ensureTimezoneCookie()
 }
@@ -266,6 +274,20 @@ func (c *Client) FlushSession(ctx context.Context) error {
 	return c.flushSessionLocked(ctx)
 }
 
+// PersistenceStatus returns a safe copy of session-save health. State is unknown
+// before the current account has been saved, saved after a successful save, and
+// failed after a selected-backend save failure. Store callbacks may call this
+// getter because it does not acquire the lifecycle mutex.
+func (c *Client) PersistenceStatus() SessionPersistenceStatus {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	state := c.persistenceState
+	if state == "" {
+		state = "unknown"
+	}
+	return SessionPersistenceStatus{State: state}
+}
+
 // SetSessionStore saves the current session to store before selecting it for all
 // subsequent persistence, including persistence from existing gameplay sessions.
 // A failed save leaves the current store selected. The previous store is not
@@ -284,6 +306,7 @@ func (c *Client) SetSessionStore(ctx context.Context, store SessionStore) error 
 		return err
 	}
 	c.sessionStore = store
+	c.recordPersistenceResult(nil)
 	return nil
 }
 
@@ -291,7 +314,19 @@ func (c *Client) flushSessionLocked(ctx context.Context) error {
 	if c.sessionStore == nil {
 		return nil
 	}
-	return c.sessionStore.Save(ctx, c.ExportSession())
+	err := c.sessionStore.Save(ctx, c.ExportSession())
+	c.recordPersistenceResult(err)
+	return err
+}
+
+// Called under lifecycleMu after saving, without holding mu during store IO.
+func (c *Client) recordPersistenceResult(err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.persistenceState = "saved"
+	if err != nil {
+		c.persistenceState = "failed"
+	}
 }
 
 // CloseIdleConnections closes any idle keep-alive connections on the underlying HTTP transport

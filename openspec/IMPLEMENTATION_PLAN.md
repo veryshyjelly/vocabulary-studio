@@ -42,9 +42,16 @@ Dashboard availability and PR validation are evidence-backed production-readines
 
 Implemented and locally validated:
 
-- [prevent-stale-auth-refresh-commit](changes/prevent-stale-auth-refresh-commit/proposal.md)
-- [preserve-session-owner-on-store-switch](changes/preserve-session-owner-on-store-switch/proposal.md)
-- [scope-list-progress-to-selected-list](changes/scope-list-progress-to-selected-list/proposal.md)
-- [validate-pull-requests](changes/validate-pull-requests/proposal.md)
+- [Authentication generation isolation](changes/prevent-stale-auth-refresh-commit/proposal.md), including strengthened stale-cookie assertions verified against removal of the guard.
+- [Stable session ownership across storage switches](changes/preserve-session-owner-on-store-switch/proposal.md), including active practice, destination failure, and pending-refresh persistence coverage.
+- [Current-list progress ownership](changes/scope-list-progress-to-selected-list/proposal.md), including 12 focused UI tests for preservation and stale responses.
+- [PR validation workflow](changes/validate-pull-requests/proposal.md), with hosted execution still awaiting the first PR containing the new workflow. Local command and workflow-structure checks passed.
+- [Persistence-failure reporting and recovery](changes/surface-session-persistence-failures/proposal.md), including safe SDK health, desktop warning/retry, credential-free CLI profile output, and concurrency regressions.
 
-5 changes remain planned. Completed changes await review, synchronization, and archive.
+These five changes are not archived. Four proposals remain unimplemented: obsolete gameplay invalidation, migration failure semantics, partial dashboard availability, and trainer bookkeeping simplification.
+
+## Next change
+
+Continue with [invalidate-obsolete-gameplay-operations](changes/invalidate-obsolete-gameplay-operations/proposal.md). It prevents late gameplay results from replacing newer sessions and clears local gameplay on logout. Stable client ownership and persistence diagnostics are now established for subsequent lifecycle and migration work.
+
+After reviewing its artifacts, invoke `$openspec-apply-change invalidate-obsolete-gameplay-operations` or ask to implement that named change. Keep changes bounded and follow the dependencies above.

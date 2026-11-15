@@ -16,6 +16,13 @@ import { Call as $Call, CancellablePromise as $CancellablePromise } from "@wails
 import * as $models from "./models.js";
 
 /**
+ * GetPersistenceStatus reads local save health without account verification or IO.
+ */
+export function GetPersistenceStatus(): $CancellablePromise<$models.SessionPersistenceStatusDTO | null> {
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.GetPersistenceStatus");
+}
+
+/**
  * GetStatus checks the current session via POST /auth/me.json and returns non-sensitive account info.
  */
 export function GetStatus(): $CancellablePromise<$models.AccountStatusDTO | null> {
@@ -43,4 +50,11 @@ export function Logout(): $CancellablePromise<$models.AccountStatusDTO | null> {
  */
 export function RestoreSession(): $CancellablePromise<$models.AccountStatusDTO | null> {
     return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.RestoreSession");
+}
+
+/**
+ * RetryPersistence retries saving to the selected backend without signing in again.
+ */
+export function RetryPersistence(): $CancellablePromise<$models.SessionPersistenceStatusDTO | null> {
+    return $Call.ByName("github.com/veryshyjelly/vocabulary-studio/internal/desktop.AuthService.RetryPersistence");
 }

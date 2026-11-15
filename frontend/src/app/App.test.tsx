@@ -16,6 +16,7 @@ function createMockAccount(authenticated = true): AccountStatusDTO {
     paid: true,
     full_vocab_trainer: true,
     session_store_mode: SessionStoreMode.SessionStoreKeyring,
+    persistence_state: "saved",
   };
 }
 
@@ -115,6 +116,8 @@ describe("Vocabulary Studio Desktop Frontend", () => {
         GetStatus: vi.fn().mockResolvedValue(createMockAccount(false)),
         Login: vi.fn().mockResolvedValue(createMockAccount(true)),
         Logout: vi.fn().mockResolvedValue(createMockAccount(false)),
+        GetPersistenceStatus: vi.fn().mockResolvedValue({ state: "saved" }),
+        RetryPersistence: vi.fn().mockResolvedValue({ state: "saved" }),
       } as any,
       progress: {
         GetHomeDashboard: vi.fn().mockResolvedValue({
@@ -241,6 +244,23 @@ describe("Vocabulary Studio Desktop Frontend", () => {
     await waitFor(() => {
       expect(screen.getByText("Ayush")).toBeInTheDocument();
     });
+  });
+
+  it("keeps unsaved-session feedback visible after successful sign-in closes the modal", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getBridge().auth.Login).mockResolvedValue({ ...createMockAccount(true), persistence_state: "failed" } as any);
+    vi.mocked(getBridge().auth.GetPersistenceStatus).mockResolvedValue({ state: "failed" } as any);
+    render(<App />);
+    await user.click((await screen.findAllByRole("button", { name: /Sign In/i }))[0]);
+    const dialog = await screen.findByRole("dialog");
+    await user.type(within(dialog).getByLabelText(/Email or Username/i), "learner@example.com");
+    await user.type(within(dialog).getByLabelText(/^Password$/i), "example-password");
+    await user.click(within(dialog).getByRole("button", { name: /^Sign In$/i }));
+    expect(await screen.findByText(/signed in, but your session could not be saved/)).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByText("Ayush")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Retry saving session" }));
+    await waitFor(() => expect(screen.queryByText(/signed in, but your session could not be saved/)).not.toBeInTheDocument());
   });
 
   it("supports interactive Practice with keyboard shortcuts, local retry feedback, and advancing to spelling", async () => {

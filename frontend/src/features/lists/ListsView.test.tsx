@@ -22,6 +22,7 @@ const account = (uid = "account-a"): AccountStatusDTO => ({
   authenticated: true, valid_user: true, uid, nickname: uid, points: 0,
   level: { id: "L01", name: "Novice", milestone: 0, progress: 0 }, paid: false, full_vocab_trainer: false,
   session_store_mode: SessionStoreMode.SessionStoreMemory,
+  persistence_state: "saved",
 });
 const list = (id: number): VocabularyList => ({
   wordlistid: id, name: `List ${id}`, shared: true,

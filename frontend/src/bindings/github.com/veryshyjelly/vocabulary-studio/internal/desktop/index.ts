@@ -36,6 +36,7 @@ export type {
     QuestionSlideDTO,
     QuizSessionDTO,
     RichSpan,
+    SessionPersistenceStatusDTO,
     TrainerSessionStateDTO,
     WordDetailDTO
 } from "./models.js";

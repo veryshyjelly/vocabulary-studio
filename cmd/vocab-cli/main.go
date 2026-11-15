@@ -104,12 +104,18 @@ func run(ctx context.Context, rawArgs []string, stdin io.Reader, stdout, stderr 
 			return 1
 		}
 		if flagJSON {
-			printJSON(stdout, me)
-			return 0
+			printAccountJSON(stdout, me)
+		} else {
+			fmt.Fprintf(stdout, "Logged in as %s (uid=%s, level=%s, points=%d, fullVocabTrainer=%v)\n",
+				me.Auth.Nickname, me.Auth.UID, me.Level.Name, me.Points, me.Perms.FullVocabTrainer)
 		}
-		fmt.Fprintf(stdout, "Logged in as %s (uid=%s, level=%s, points=%d, fullVocabTrainer=%v)\n",
-			me.Auth.Nickname, me.Auth.UID, me.Level.Name, me.Points, me.Perms.FullVocabTrainer)
-		fmt.Fprintf(stdout, "Session saved to %s\n", flagSession)
+		if client.PersistenceStatus().State == "failed" {
+			fmt.Fprintln(stderr, "warning: signed in, but the session could not be saved. Check session storage and sign in again to retry.")
+			return 1
+		}
+		if !flagJSON {
+			fmt.Fprintf(stdout, "Session saved to %s\n", flagSession)
+		}
 		return 0
 
 	case "logout":
@@ -131,7 +137,7 @@ func run(ctx context.Context, rawArgs []string, stdin io.Reader, stdout, stderr 
 			return 1
 		}
 		if flagJSON {
-			printJSON(stdout, me)
+			printAccountJSON(stdout, me)
 			return 0
 		}
 		fmt.Fprintf(stdout, "ValidUser: %v | LoggedIn: %v | UID: %s | Nickname: %s | Points: %d | Level: %s (%s)\n",
@@ -418,4 +424,12 @@ func printJSON(w io.Writer, v any) {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	_ = enc.Encode(v)
+}
+
+func printAccountJSON(w io.Writer, account *vocab.LoginData) {
+	// GUID is a refresh credential, not account display data. Keep the SDK's
+	// account object intact while omitting the credential from CLI output.
+	safe := *account
+	safe.GUID = ""
+	printJSON(w, &safe)
 }

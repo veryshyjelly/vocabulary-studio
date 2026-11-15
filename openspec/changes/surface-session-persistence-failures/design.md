@@ -46,6 +46,20 @@ Land preservation/regression tests with the implementation that satisfies them. 
 
 ## Validation
 
-Run focused tests appropriate to the affected layers and preserve the characterized behavior.
+### Implemented contract
 
-Run `openspec validate surface-session-persistence-failures --strict --no-interactive` before implementation is considered complete.
+- SDK `Client.PersistenceStatus()` returns only a copied `SessionPersistenceStatus{State}`: `unknown`, `saved`, or `failed`. It uses the client state lock and is safe inside store callbacks. Existing `FlushSession` retries the selected backend and updates health; a failed destination switch leaves the current backend's health intact.
+- Successful web authentication remains valid when token acquisition or session saving fails. Automatic saves record health independently, and account-generation invalidation prevents obsolete work from changing replacement health. Failed-login rollback preserves the restored account's prior warning.
+- Desktop account status adds `persistence_state`. `GetPersistenceStatus` reads local state without network requests; `RetryPersistence` retries the same backend and returns a generic safe error rather than the store error. Wails bindings were regenerated with the repository flags.
+- The global desktop warning survives modal closure. Local status polling every five seconds detects later save failures. Account/mode changes, unmount, and retry generations invalidate stale replies. Successful save or deliberate memory selection clears the warning; an unknown status cannot conceal a known failure.
+- CLI login keeps valid success output but warns on stderr and exits 1 when persistence failed. `login --json` and `me --json` omit the refresh credential `guid`, while retaining other profile fields. This is an intentional removal of credential output, documented in the CLI guide.
+
+### Verification evidence
+
+Fault-injected SDK and desktop tests cover failed login/refresh saves, safe copied status, retry failure/recovery, backend selection, and obsolete work. Desktop tests assert retry makes no network requests and cannot expose raw backend secrets. CLI tests cover text/JSON success and partial success, token outages, and credential-free login/profile output. Frontend tests cover partial sign-in, retry, local polling, stale responses, and clearing stale retry feedback.
+
+Final verification passed: complete SDK and desktop/CLI race suites; ten repeated SDK persistence race runs, including both login APIs with concurrent save failure and account replacement; SDK static analysis; frontend strict type checks, all 36 tests, and production build. Independent review identified the rollback-health ordering defect, and re-review confirmed its resolution. All 18 OpenSpec items pass strict validation. No live account credentials were needed.
+
+SDK, desktop/CLI tests and frontend typecheck/build/tests
+
+Also run `openspec validate surface-session-persistence-failures --strict --no-interactive` and confirm all tasks are checked only after their verification succeeds.

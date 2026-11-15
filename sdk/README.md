@@ -74,6 +74,24 @@ use the selected backend after the switch returns. This operation preserves the
 authentication generation and pacing state, rejects a nil destination, and does
 not clear the previous store. Callers retiring a durable backend own its cleanup.
 
+### Persistence health and retry
+
+`client.PersistenceStatus()` returns a safe copied value with a `state` of
+`unknown`, `saved`, or `failed`. It never includes credentials, filesystem paths,
+or raw backend error details. Health describes the current account's most recent
+save to the selected backend; it is `unknown` before a save and after logout or
+session import. A rejected login that restores the previous account preserves
+that account's health. Successful saves to memory also report `saved`; this means
+the chosen backend accepted the snapshot, not that it survives process exit.
+
+Web login and token refresh retain their successful authentication results when
+automatic session saving fails. Inspect persistence health to detect that partial
+success, then call `client.FlushSession(ctx)` to retry the selected backend. A
+successful retry clears `failed` to `saved`. A failed destination save during
+`SetSessionStore` leaves the current backend and its health unchanged; a successful
+switch reports `saved`. Persistence health uses a separate state lock from
+lifecycle ordering, so store callbacks may inspect `PersistenceStatus()` safely.
+
 ## Work on the library
 
 Run these commands from `sdk/`:

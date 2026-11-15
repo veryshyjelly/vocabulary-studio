@@ -3,6 +3,7 @@ import { Home, Sparkles, BookOpen, ListChecks, Compass, TrendingUp, Settings, Lo
 import type { AccountStatusDTO, AppPreferences } from "../lib/bridge";
 import { getBridge, SessionStoreMode } from "../lib/bridge";
 import { AuthModal } from "../features/auth/AuthModal";
+import { SessionPersistenceNotice } from "../features/auth/SessionPersistenceNotice";
 import { ShortcutsDialog } from "../components/Shortcuts";
 import { Kbd, ToastProvider, cx } from "../components/ui";
 import { acceptsPlainShortcut, isModalOpen, modKeyLabel } from "../lib/keys";
@@ -403,6 +404,7 @@ export const App: React.FC = () => {
 
         {/* Main content */}
         <main id="main" ref={mainRef} tabIndex={-1} className="flex-1 min-w-0 overflow-y-auto focus:outline-none">
+          <SessionPersistenceNotice account={account} />
           <div key={activeNav} className="page-content animate-enter mx-auto w-full max-w-[1160px]">
             {activeNav === "home" && (
               <HomeView
@@ -468,7 +470,10 @@ export const App: React.FC = () => {
               <SettingsView
                 preferences={preferences}
                 account={account}
-                onPreferencesUpdated={setPreferences}
+                onPreferencesUpdated={(prefs) => {
+                  setPreferences(prefs);
+                  setAccount((current) => current ? { ...current, session_store_mode: prefs.session_store_mode } : null);
+                }}
                 onAccountChanged={setAccount}
                 onRequestLogin={() => setAuthModalOpen(true)}
               />
@@ -480,7 +485,10 @@ export const App: React.FC = () => {
           isOpen={authModalOpen}
           initialStoreMode={preferences.session_store_mode}
           onClose={() => setAuthModalOpen(false)}
-          onSuccess={(status) => setAccount(status)}
+          onSuccess={(status) => {
+            setAccount(status);
+            setPreferences((current) => ({ ...current, session_store_mode: status.session_store_mode }));
+          }}
         />
         <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
       </div>

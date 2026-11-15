@@ -22,6 +22,7 @@ export interface AccountStatusDTO {
     "paid": boolean;
     "full_vocab_trainer": boolean;
     "session_store_mode": SessionStoreMode;
+    "persistence_state": string;
     "bowl"?: vocab$0.BowlSeason | null;
 }
 
@@ -215,6 +216,13 @@ export interface RichSpan {
     "text": string;
     "bold"?: boolean;
     "italic"?: boolean;
+}
+
+/**
+ * SessionPersistenceStatusDTO reports save health without backend error details.
+ */
+export interface SessionPersistenceStatusDTO {
+    "state": string;
 }
 
 /**
