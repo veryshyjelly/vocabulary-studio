@@ -16,7 +16,9 @@ for CLI installation and workflow details.
 The baseline specs describe implemented capabilities. They do not introduce new
 features or claim that every scenario already has a dedicated automated test.
 Source and test references in each spec help locate the implementation and
-existing coverage. There are no active change proposals at initialization.
+existing coverage. See the [implementation backlog](IMPLEMENTATION_PLAN.md) for
+the nine review-driven proposals, their priorities, dependencies, and required
+characterization tests.
 
 ## Capability index
 
